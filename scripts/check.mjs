@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// code-review-kit automated checks. No dependencies. Run from the project root:
-//   node path/to/code-review-kit/scripts/check.mjs [path/to/review.config.json]
+// review-kit automated checks. No dependencies. Run from the project root:
+//   node path/to/review-kit/scripts/check.mjs [path/to/review.config.json]
 // Exit code 1 if any command fails or any forbidden/secret match is found.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';

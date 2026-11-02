@@ -1,6 +1,16 @@
-# code-review-kit
+# review-kit
 
 Reusable pre-release review for any project. Findings first, fixes only after the owner chooses.
+
+## Reviews by phase
+
+| Phase | Skill | Use it when |
+|---|---|---|
+| Design | `architecture-review` | Before building (design-only mode) or any time the design changes |
+| Design | `db-model-review` | When the data model or database rules are drafted or changing |
+| Build and release | `code-review` | Before each release; includes the security reviewer |
+
+Run them in that order. Earlier phases are cheaper to fix.
 
 ## What is inside
 
@@ -18,7 +28,7 @@ Reusable pre-release review for any project. Findings first, fixes only after th
 1. Copy `templates/review.config.json` to the project root as `review.config.json` and fill it in (stack, checklists, risky areas, commands). The `design` block (goal, scale, budget, next features) feeds the architecture and database reviews. See `examples/` for a sample.
 2. Run the automated layer:
    ```
-   node /path/to/code-review-kit/scripts/check.mjs
+   node /path/to/review-kit/scripts/check.mjs
    ```
 3. Ask Claude Code: "run the code-review skill" (or "architecture-review", or "db-model-review"). It starts the reviewers in a fresh context, merges the results, and shows a ranked list before touching code.
 
@@ -34,4 +44,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.1.0 - 2026-11-02 09:05 CST
+Version 1.2.0 - 2026-11-02 09:20 CST

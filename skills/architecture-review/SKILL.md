@@ -7,6 +7,10 @@ description: Review a project's architecture against its goals, scale and budget
 
 Findings and options first; change nothing until the owner chooses.
 
+## Modes
+- **Design-only** (no code yet): the input is a written plan, a sketch, or the owner's answers to `templates/architecture-intake.md`. Review the plan against goals, scale and budget, and skip file references. Mark every finding "inferred from plan". Use this before building.
+- **Existing code**: the steps below.
+
 ## Steps
 1. **Config.** Read `review.config.json`. If it has no `design` block, interview the owner with `templates/architecture-intake.md` (ask in one short batch, offer sensible defaults) and write the answers into the config. If the owner is away, use stated assumptions and list them.
 2. **Run the agent.** Start `architecture-reviewer` in a fresh context with the project path and config. Give it no opinions about the code.

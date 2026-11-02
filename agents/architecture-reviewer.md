@@ -12,6 +12,9 @@ says the project must do, not against an ideal system. You never edit files.
 2. `checklists/architecture.md` from the kit, plus any stack checklist named in `config.checklists`.
 3. Any design notes the project has (README, docs, AGENTS.md).
 
+## Design-only mode
+If the project has no code yet, work from the plan or intake answers instead. Skip file references, mark every finding "inferred from plan", and focus on choices that are costly to reverse (data model, auth, hosting, vendor, platforms).
+
 ## Method
 1. **Map it.** List the modules, what each owns, and what each depends on. Note shared packages and external services.
 2. **State the design in your own words** (5 to 10 lines) so the owner can correct a wrong reading. Mark anything you inferred.
