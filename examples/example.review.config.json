@@ -1,0 +1,85 @@
+{
+  "name": "example-notes-app",
+  "stack": [
+    "react-native-expo"
+  ],
+  "checklists": [
+    "general",
+    "security"
+  ],
+  "stores": [],
+  "riskyAreas": [
+    "delete account",
+    "anything that sums money",
+    "backend rules"
+  ],
+  "ignore": [],
+  "design": {
+    "goal": "A notes app for one person, synced through Firestore.",
+    "scale": {
+      "usersNow": 10,
+      "users12Months": 1000,
+      "recordsPerUser": 500
+    },
+    "budget": "free tiers only",
+    "platforms": [
+      "ios"
+    ],
+    "team": "solo developer",
+    "mustNeverHappen": [
+      "lose a user's data",
+      "show a wrong total"
+    ],
+    "next": [
+      "feature one",
+      "feature two"
+    ],
+    "constraints": [],
+    "decided": []
+  },
+  "data": {
+    "store": "firestore",
+    "modelFiles": [
+      "src/types.ts"
+    ],
+    "rulesFile": "firestore.rules",
+    "accessFiles": [
+      "src/store.ts"
+    ]
+  },
+  "commands": [
+    {
+      "name": "types",
+      "run": "npx tsc --noEmit"
+    }
+  ],
+  "forbidden": [
+    {
+      "name": "console.log",
+      "pattern": "console\\.log\\(",
+      "paths": [
+        "src",
+        "App.tsx"
+      ]
+    },
+    {
+      "name": "TODO/FIXME",
+      "pattern": "TODO|FIXME",
+      "paths": [
+        "src",
+        "App.tsx"
+      ]
+    }
+  ],
+  "secrets": {
+    "paths": [
+      "."
+    ],
+    "skip": [
+      "node_modules",
+      ".git",
+      "dist",
+      "package-lock.json"
+    ]
+  }
+}

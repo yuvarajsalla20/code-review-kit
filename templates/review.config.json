@@ -9,6 +9,23 @@
     "backend rules"
   ],
   "ignore": [],
+  "design": {
+    "goal": "One or two sentences: what it does and for whom.",
+    "scale": { "usersNow": 10, "users12Months": 1000, "recordsPerUser": 500 },
+    "budget": "free tiers only",
+    "platforms": ["ios"],
+    "team": "solo developer",
+    "mustNeverHappen": ["lose a user's data", "show a wrong total"],
+    "next": ["feature one", "feature two"],
+    "constraints": [],
+    "decided": []
+  },
+  "data": {
+    "store": "firestore",
+    "modelFiles": ["src/types.ts"],
+    "rulesFile": "firestore.rules",
+    "accessFiles": ["src/store.ts"]
+  },
   "commands": [
     { "name": "types", "run": "npx tsc --noEmit" }
   ],
