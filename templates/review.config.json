@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "stack": ["react-native-expo"],
+  "checklists": ["general", "security"],
+  "stores": [],
+  "riskyAreas": [
+    "delete account",
+    "anything that sums money",
+    "backend rules"
+  ],
+  "ignore": [],
+  "commands": [
+    { "name": "types", "run": "npx tsc --noEmit" }
+  ],
+  "forbidden": [
+    { "name": "console.log", "pattern": "console\\.log\\(", "paths": ["src", "App.tsx"] },
+    { "name": "TODO/FIXME", "pattern": "TODO|FIXME", "paths": ["src", "App.tsx"] }
+  ],
+  "secrets": { "paths": ["."], "skip": ["node_modules", ".git", "dist", "package-lock.json"] }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "code-review-kit",
+  "version": "1.0.0",
+  "description": "Reusable pre-release code review: automated checks, an independent reviewer agent, a security reviewer, and stack checklists. Configure per project with review.config.json.",
+  "author": { "name": "Yuvaraj Salla" },
+  "license": "MIT"
+}
