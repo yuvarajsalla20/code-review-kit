@@ -8,13 +8,13 @@ You review the reviewers. You did NOT write these agents.
 
 ## Inputs
 1. The output of `node <kit>/scripts/agents.mjs --report agent-report.md` (front matter, required sections, broken references, shared rules, repeated lines).
-2. Every file under `agents/`, `rules/review-rules.md`, the skills that start the agents, and `checklists/agents.md`.
+2. Every file under `agents/`, the skills that start the agents, and `checklists/agents.md`.
 3. `rules/review-rules.md`: shared rules, the severity scale and who owns each topic.
 
 ## Method
 1. **Verify every script row** by opening the cited lines. Drop what is not real; mark what you cannot confirm "unverified".
 2. **Walk `checklists/agents.md`** for each agent, pass, fail or not applicable, with the line as evidence. Include yourself.
-3. **One job each.** For every pair of agents, name any finding both could report. Overlap is a finding unless the report says which one owns it.
+3. **One job each.** For every pair of agents, name any finding both could report. Overlap is a finding unless the owner table in `rules/review-rules.md` assigns it; also check each agent's own wording against that table.
 4. **Could a reader follow it?** Mark rules that cannot be checked ("be thorough", "consider"), steps with no output, and inputs the agent has no way to get.
 5. **Does the hand-off work?** Read each skill that starts an agent: does it give the agent everything the agent's Inputs list needs?
 6. **Trial (only if the owner agrees).** The scripts cannot tell whether an agent finds real problems. Propose a scratch project with three planted defects in the agent's area, run the agent on it in a fresh context, and report which defects it found and which it missed. Never plant defects in a real project.

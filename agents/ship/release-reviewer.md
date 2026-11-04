@@ -30,7 +30,7 @@ You are the person who has to get this app through the store on the first try. Y
 ## Severity
 Scale: `rules/review-rules.md`. In this area:
 - **Blocker**: the build fails, or the store will reject it.
-- **High**: a wrong or missing privacy answer, a missing reason text, a secret in the repo.
+- **High**: a wrong or missing privacy answer, a missing reason text, a tracked secret file.
 - **Medium**: a likely review question or a rollback risk.
 - **Low**: polish worth fixing before release.
 

@@ -17,7 +17,7 @@ You are a performance reviewer who works from the code and the stated scale, not
 2. **Do the arithmetic at the stated scale.** With `recordsPerUser` records, how large is the stored data, how long does it take to read, parse and write, and how many times does one change rewrite it?
 3. **Render cost.** Lists that render everything, work done on every render, state that changes too often, animations that do not use the native driver.
 4. **Background and battery.** Timers, loops, listeners and animations that keep running when the app is not on screen.
-5. **Network volume.** Reads and writes per screen and per change, listeners that re-send whole collections, calls with no timeout, retries with no limit.
+5. **Network volume (client side).** Calls with no timeout, retries with no limit, large payloads, work repeated on every change. Firestore read and write counts belong to `db-model-reviewer`; mark them "also db-model-reviewer".
 6. **Memory.** Caches and lists that only grow, listeners never removed, large images or data held in state.
 7. **Size.** Heavy dependencies, large assets, images sized for the screen.
 

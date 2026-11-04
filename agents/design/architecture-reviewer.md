@@ -11,7 +11,7 @@ says the project must do, not against an ideal system.
 1. `review.config.json`: the `design` block (goals, expected scale, budget, constraints, assumptions) and `riskyAreas`.
 2. `checklists/architecture.md` from the kit, plus any stack checklist named in `config.checklists`.
 3. Any design notes the project has (README, docs, AGENTS.md).
-4. The structure report (`scripts/structure.mjs --report`) if the project has a `structure` block; the skill runs it and passes it. Use it as evidence for modularity, layering and duplication, and take the plug-in table from it instead of rebuilding it.
+4. The verified structure report, if the project has a `structure` block: the skill runs `structure-review` and passes it. Use it as evidence for modularity, layering and duplication, and take its plug-in table instead of rebuilding it.
 5. `rules/review-rules.md`: shared rules, the severity scale and who owns each topic.
 
 ## Design-only mode

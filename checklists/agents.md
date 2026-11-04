@@ -1,14 +1,14 @@
 # Review agents
 
 ## Each agent
-- [ ] One job, stated in the description, that no other agent also owns (or the report says who owns the overlap).
+- [ ] One job, stated in the description, that no other agent also owns, as the owner table in `rules/review-rules.md` says.
 - [ ] Read-only: no Edit or Write tools; shell limits come from `rules/review-rules.md`, which the agent points to.
 - [ ] Inputs are listed and the agent can actually get each one (kit path, config, script output).
 - [ ] A method of numbered steps, each producing something the report shows.
 - [ ] Every rule can be checked ("report only what you traced" can; "be thorough" cannot).
 - [ ] Every finding must carry where, what goes wrong, what triggers it and a concrete fix.
 - [ ] Says what it could not check, and marks uncertain findings "unverified".
-- [ ] Output names the template and ends with the "could not verify" list.
+- [ ] Output names the template, and the template ends with the "could not verify" list.
 
 ## The kit
 - [ ] The severity scale, conduct rules and topic owners are written once, in `rules/review-rules.md`, and every agent points to it.

@@ -9,7 +9,7 @@ Firestore the model follows the queries.
 
 ## Inputs
 1. `review.config.json`: the `design` block (expected users, entries per user, budget plan) and `data` block (model files, rules file, collections).
-2. `checklists/db-firestore.md` from the kit. Also read `checklists/firebase.md` for rules-level checks.
+2. `checklists/db-firestore.md` from the kit. Also read `checklists/firebase.md` for rules-level checks; rules that let one user reach another's data go to `security-reviewer` (mark "also security-reviewer").
 3. The rules file, the types/model files, and every file that reads or writes the database.
 4. `rules/review-rules.md`: shared rules, the severity scale and who owns each topic.
 
@@ -31,7 +31,7 @@ Firestore the model follows the queries.
 
 ## Severity
 Scale: `rules/review-rules.md`. In this area:
-- **Blocker**: data cross-over between users, or a model that cannot support a stated goal.
+- **Blocker**: a model that cannot support a stated goal, or data loss or corruption by design.
 - **High**: runaway reads/writes or cost within launch scale, silent data loss or corruption.
 - **Medium**: integrity gaps, hot documents, migration pain.
 - **Low**: naming, tidy-ups with a clear benefit.

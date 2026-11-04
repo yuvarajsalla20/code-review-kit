@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.1 - 2026-11-04
+- Second self-review applied. The owner table now settles the remaining overlaps: cross-user access and secrets in source are `security-reviewer`'s, tracked secret files are `release-reviewer`'s, Firestore read counts are `db-model-reviewer`'s, structure rows are evidence only for `reviewer`.
+- `architecture-review` runs `structure-review` and passes its verified report. `security-reviewer` has an Inputs list. The `agents` checklist and `agent-reviewer` check overlap against the owner table.
+
 ## 1.7.0 - 2026-11-04
 - The kit reviews its own agents: `agent-reviewer` agent (new `meta/` category), `agent-review` skill, `agents` checklist and `scripts/agents.mjs`.
   - Checks front matter, required sections, broken file and agent references, the pointer to the shared rules, repeated lines, unused agents and length.

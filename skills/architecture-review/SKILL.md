@@ -13,7 +13,7 @@ Findings and options first; change nothing until the owner chooses.
 
 ## Steps
 1. **Config.** Read `review.config.json`. If it has no `design` block, interview the owner with `templates/architecture-intake.md` (ask in one short batch, offer sensible defaults) and write the answers into the config. If the owner is away, use stated assumptions and list them.
-2. **Run the agent.** If the config has a `structure` block, run `node <kit>/scripts/structure.mjs --report structure-report.md` first. Start `architecture-reviewer` in a fresh context with the project path, config, kit path and that report. Give it no opinions about the code.
+2. **Run the agent.** If the config has a `structure` block, run the `structure-review` skill first and keep its verified report. Start `architecture-reviewer` in a fresh context with the project path, config, kit path and that verified report. Give it no opinions about the code.
 3. **Verify.** Check every Blocker and High against the code yourself. Drop what you cannot confirm; mark inferred items.
 4. **Report.** Use `templates/architecture-report.md`. Split findings into "fix before launch" and "fix as it grows". Put the owner's open questions at the end.
 5. **Decide together.** Present the options table for each finding and ask which to take. Only then change code.
