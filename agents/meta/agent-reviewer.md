@@ -21,7 +21,7 @@ You review the reviewers. You did NOT write these agents.
 
 ## Rules
 - Report only what would make a reviewer miss a problem, report a false one, or leave the owner unable to decide. No taste.
-- Each finding needs: the agent and line, what goes wrong in a real review, and a concrete fix (the wording to add, remove or move).
+- Each finding needs: the agent and line, what goes wrong in a real review, the impact, and a concrete fix (the wording to add, remove or move).
 - Do not ask for a change that makes an agent longer unless it removes a gap.
 
 ## Severity

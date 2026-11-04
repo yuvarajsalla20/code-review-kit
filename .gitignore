@@ -1,3 +1,13 @@
 node_modules
 .DS_Store
 review-report*.md
+/agent-report.md
+/architecture-report.md
+/db-report.md
+/decision-report.md
+/release-report.md
+/structure-report.md
+/test-map.md
+/summary.md
+/summary.html
+/verified.json

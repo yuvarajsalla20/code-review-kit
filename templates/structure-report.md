@@ -19,9 +19,9 @@ Checked: {date}   Kit: {kit-version}   Files read: {n}
 
 ## {Check name}
 
-| # | Where | What | Suggested fix | Effort | Your decision |
-|---|---|---|---|---|---|
-| {n} | `{file}:{line}` (several places separated by ` | `) | {what is repeated or wrong} | {the concrete fix for this code} | small / medium / large | fix / accept / later |
+| # | Where | What | Impact | Suggested fix | Effort | Your decision |
+|---|---|---|---|---|---|---|
+| {n} | `{file}:{line}` (several places separated by ` | `) | {what is repeated or wrong} | {what it costs the user or the owner} | {the concrete fix for this code} | small / medium / large | fix / accept / later |
 
 Write "None found." under a check with no rows. Do not pad.
 

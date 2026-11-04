@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.2 - 2026-11-04
+- Fresh agent-reviewer pass applied (8 findings).
+  - Owner table: field validation in rules is db-model-reviewer's (a gap that lets one user write another's data is also security-reviewer's), rollback and update path is release-reviewer's, a caught error that shows nothing is ux-reviewer's, a swallowed error path in logic is reviewer's.
+  - Agent wording: `design.platforms` named, db-model Inputs uses "access files", architecture description says "operability risk", the tool allow-list is named in the agents checklist, findings state their impact.
+  - Docs: README rows brought up to date; `code-review` skill re-runs steps 2 to 5; structure and decision templates have an Impact column; `.gitignore` covers every report file the skills write.
+
 ## 1.9.1 - 2026-11-04
 - The table-cell helper is written once (`lib/table.mjs`) and used by the summary. The "Blocker means must fix" rule is written once in `summary/model.mjs`.
 - New test: type-only import loops are ignored by default and found when `includeTypeOnlyCycles` is set.

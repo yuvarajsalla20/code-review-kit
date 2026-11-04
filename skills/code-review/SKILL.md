@@ -16,7 +16,7 @@ Findings first, fixes only after the owner chooses. Never change code during the
 5. **Store compliance.** If `config.stores` is set, run `node <kit>/scripts/release.mjs --report release-report.md`, then start the `release-reviewer` agent the same way with that report (it walks `checklists/app-store.md` and `release.md`).
 5b. **Optional passes.** On request, or when the change touches `riskyAreas`, run the `focused-review` skill for tests (`test-reviewer`), usability (`ux-reviewer`) or speed (`performance-reviewer`).
 6. **Merge.** De-duplicate, verify each Blocker and High yourself by reading the cited code, drop anything you cannot confirm, and write one report using `templates/report.md`.
-7. **Show the owner** the ranked list and ask which to fix. Fix only those, then re-run steps 2 to 4.
+7. **Show the owner** the ranked list and ask which to fix. Fix only those, then re-run steps 2 to 5.
 8. **Manual test script.** Produce a short numbered list of on-device steps from `templates/manual-test.md`, adjusted to the app's screens.
 
 ## Notes

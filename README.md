@@ -32,17 +32,17 @@ Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which 
 
 | Folder | Purpose |
 |---|---|
-| `agents/` | One folder per category, see **Categories** below. Every agent is read-only and runs in a fresh context. |
+| `agents/` | One folder per category, see **Categories** above. Every agent is read-only and runs in a fresh context. |
 | `rules/` | `review-rules.md`: the conduct rules, the severity scale and the owner of each topic, written once. Every agent points to it. |
 | `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `focused-review` (one area: release, tests, usability or performance), `agent-review` (the kit checks its own agents), `review-summary` (one plain-language report for the whole project), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
 | `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes), release, tests, ux, performance. Add more as you learn. |
 | `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and every check area whose block is in the config (structure, release, tests, agents; the list is `scripts/areas.mjs`). A mistyped path, gate name or area stops the run with a clear message instead of switching a check off. |
 | `scripts/summary.mjs` | One plain-language summary of every check: verdict (Ready, Ready after fixes, Not ready), the five things to fix first, one decision table, terms explained, and what could not be checked. Writes markdown (`--report`) and a self-contained page (`--html`) with the version and date on a gray footer. Takes the agents' verified changes with `--extra`. Refuses to say Ready when no check ran. Time stamps use the `timezone` setting (default UTC). |
-| `scripts/agents.mjs` | The kit checks its own agents: front matter, required sections, broken references, the pointer to the shared rules, repeated lines. Needs no config. Run from the kit root with `--report`. |
+| `scripts/agents.mjs` | The kit checks its own agents: front matter, required sections, broken references, the pointer to the shared rules, the tool allow-list (`agents.allowedTools`), repeated lines, unused agents, length. Needs no config. Run from the kit root with `--report`. |
 | `scripts/release.mjs`, `scripts/testmap.mjs` | Release readiness (lock file, app settings, permission texts, tracked secret files, privacy keywords) and risky files no test reaches. Both take `--report` and `--json`; settings are the `release` and `tests` blocks in `review.config.json`. |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
 | `tests/` | Offline tests for the scripts: `node --test tests/*.test.mjs`. |
-| `templates/` | `review.config.json`, `report.md`, `architecture-report.md`, `structure-report.md`, `db-report.md`, `architecture-intake.md`, `manual-test.md`. |
+| `templates/` | `review.config.json`, `report.md`, `architecture-report.md`, `structure-report.md`, `db-report.md`, `summary-report.md`, `decision-report.md`, `architecture-intake.md`, `manual-test.md`. |
 | `examples/` | A neutral sample config. Real project configs live in each project's own repo. |
 
 ## Use it in a project
@@ -98,4 +98,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.9.1 - 2026-11-04 3:40 PM CT
+Version 1.9.2 - 2026-11-04 3:36 PM CT

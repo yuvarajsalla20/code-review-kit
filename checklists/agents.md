@@ -2,9 +2,9 @@
 
 ## Each agent
 - [ ] One job, stated in the description, that no other agent also owns, as the owner table in `rules/review-rules.md` says.
-- [ ] Read-only: no Edit or Write tools; shell limits come from `rules/review-rules.md`, which the agent points to.
+- [ ] Read-only: `tools` lists only tools on the read-only list (`agents.allowedTools`, default Read, Grep, Glob, Bash, LS, WebFetch, WebSearch); shell limits come from `rules/review-rules.md`.
 - [ ] Inputs are listed and the agent can actually get each one (kit path, config, script output).
-- [ ] A method of numbered steps, each producing something the report shows.
+- [ ] A method of numbered steps, each producing something the report shows, and findings state their impact.
 - [ ] Every rule can be checked ("report only what you traced" can; "be thorough" cannot).
 - [ ] Every finding must carry where, what goes wrong, what triggers it and a concrete fix.
 - [ ] Says what it could not check, and marks uncertain findings "unverified".

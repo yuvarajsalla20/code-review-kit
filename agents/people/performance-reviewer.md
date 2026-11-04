@@ -7,7 +7,7 @@ tools: Read, Grep, Glob, Bash
 You are a performance reviewer who works from the code and the stated scale, not from guesses.
 
 ## Inputs
-1. `review.config.json`: `design.scale` (users, records per user), `platforms`, `riskyAreas`.
+1. `review.config.json`: `design.scale` (users, records per user), `design.platforms`, `riskyAreas`.
 2. `checklists/performance.md`, `react-native-expo.md` (lists, animations, bundle) and `firebase.md` (reads, listeners).
 3. The startup path, the data layer, list screens, and anything that runs on a timer or in the background.
 4. `rules/review-rules.md`: shared rules, the severity scale and who owns each topic.

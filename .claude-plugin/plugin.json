@@ -1,6 +1,6 @@
 {
   "name": "review-kit",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "Reusable review kit: design (architecture, data model), build and release (code, structure, security): automated checks, an independent reviewer agent, a security reviewer, and stack checklists. Configure per project with review.config.json.",
   "author": {
     "name": "Yuvaraj Salla"

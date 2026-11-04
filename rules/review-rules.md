@@ -25,12 +25,12 @@ A topic has one owner. Report another agent's topic only when you hit it while t
 | Topic | Owner |
 |---|---|
 | Sign-in, access rules, secrets inside source or history, account deletion | `security-reviewer` |
-| Firestore data shape, queries, read and write cost | `db-model-reviewer` |
+| Firestore data shape, queries, read and write cost, field validation in rules (a gap that lets one user write another's data: also `security-reviewer`) | `db-model-reviewer` |
 | Duplicates, import loops, layers, size, files that change per feature | `structure-reviewer` |
 | Which negative cases need a test | `test-reviewer` |
-| Code that mishandles a negative case, wrong logic, wrong dates or money | `reviewer` |
-| Build, lock file, store rules, a secret file tracked by git | `release-reviewer` |
-| Contrast, targets, labels, screen states | `ux-reviewer` |
+| Code that mishandles a negative case, wrong logic, wrong dates or money, a swallowed or wrong error path in logic | `reviewer` |
+| Build, lock file, store rules, a secret file tracked by git, rollback and update path | `release-reviewer` |
+| Contrast, targets, labels, screen states, a caught error that shows the user nothing | `ux-reviewer` |
 | Client speed, battery, memory, network volume | `performance-reviewer` |
-| Design risks against goals, scale and budget | `architecture-reviewer` |
+| Design risks against goals, scale and budget (rollback: mark "also release-reviewer") | `architecture-reviewer` |
 | The reviewers themselves | `agent-reviewer` |

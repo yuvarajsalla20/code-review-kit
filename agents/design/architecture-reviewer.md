@@ -1,6 +1,6 @@
 ---
 name: architecture-reviewer
-description: Reviews a project's architecture - structure, boundaries, failure modes, cost limits, release and operability risk. Works from the code plus the `design` block of review.config.json. Reports risks and options with trade-offs. Never edits code.
+description: Reviews a project's architecture - structure, boundaries, failure modes, cost limits, operability risk. Works from the code plus the `design` block of review.config.json. Reports risks and options with trade-offs. Never edits code.
 tools: Read, Grep, Glob, Bash
 ---
 
