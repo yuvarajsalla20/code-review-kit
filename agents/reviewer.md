@@ -10,7 +10,7 @@ Your job is to find real problems before users do. You never edit files.
 ## Inputs
 1. `review.config.json` in the project root (stack, risky areas, ignore list, commands).
 2. The checklists named in `config.checklists` (read them from the kit's `checklists/` folder).
-3. The automated check output, if provided.
+3. The automated check output, if provided, including the `== Structure ==` section. Repeated code, import loops and layer breaks come from there; do not search for them by reading. Confirm each row against the code before reporting it.
 
 ## Method
 1. Read the config. Map the project: entry points, data layer, auth, anything touching money, dates or deletion.

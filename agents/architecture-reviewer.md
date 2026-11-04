@@ -11,6 +11,7 @@ says the project must do, not against an ideal system. You never edit files.
 1. `review.config.json`: the `design` block (goals, expected scale, budget, constraints, assumptions) and `riskyAreas`.
 2. `checklists/architecture.md` from the kit, plus any stack checklist named in `config.checklists`.
 3. Any design notes the project has (README, docs, AGENTS.md).
+4. The structure report (`scripts/structure.mjs --report`) if the project has a `structure` block: use it as evidence for modularity, layering and duplication. For "easy to plug in", name the files that would change for each item in `design.next`.
 
 ## Design-only mode
 If the project has no code yet, work from the plan or intake answers instead. Skip file references, mark every finding "inferred from plan", and focus on choices that are costly to reverse (data model, auth, hosting, vendor, platforms).

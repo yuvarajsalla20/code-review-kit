@@ -9,7 +9,7 @@ Findings first, fixes only after the owner chooses. Never change code during the
 
 ## Steps
 1. **Config.** Look for `review.config.json` in the project root. If missing, copy `templates/review.config.json`, fill it from the project (stack, commands, risky areas), and show it to the owner.
-2. **Automated checks.** Run `node <kit>/scripts/check.mjs` from the project root. It runs the configured commands and scans for leftover dev code and secrets. Save the output.
+2. **Automated checks.** Run `node <kit>/scripts/check.mjs` from the project root. It runs the configured commands, scans for leftover dev code and secrets, and, when the config has a `structure` block, checks for import loops, layer breaks, repeated code and oversized files. Save the output. For the full duplicate and structure table, run the `structure-review` skill.
 3. **Independent review.** Start the `reviewer` agent in a fresh context. Give it only the project path, the config and the check output, not your own opinions of the code.
 4. **Security review.** Start the `security-reviewer` agent the same way.
 4b. **Failure paths (on request, or automatically when the change touches `riskyAreas`).** Say "review with negative cases" to turn it on. Start a fresh `reviewer` with `checklists/failure-paths.md` plus the project's `failurePaths` notes from the config. It reports only verified findings, lists what it handled correctly, and lists what needs a device or emulator. After any fixes, run it again on the fix diff: fixes open new failure paths. It is slower and costs more than the normal pass, so it stays off for small changes.

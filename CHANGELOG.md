@@ -1,0 +1,16 @@
+# Changelog
+
+## 1.4.0 - 2026-11-04
+- Structure checks, dependency-free: `scripts/structure.mjs` and the `structure` section of `check.mjs`.
+  - Circular imports, layer rules and restricted packages (gate), duplicate code, repeated lists and text, and size (review).
+  - `--report` writes the findings as tables with a "Your decision" column.
+- `structure-review` skill and `templates/structure-report.md`.
+- `check.mjs` now shares its file walking with the new scripts (`scripts/lib/files.mjs`) instead of keeping its own copy.
+- Offline tests in `tests/`.
+- Architecture and general checklists, reviewer and architecture-reviewer agents, and `code-review` skill now use the structure output.
+
+## 1.3.0 - 2026-11-03
+- `failure-paths` checklist and an opt-in "review with negative cases" pass in `code-review`.
+
+## 1.2.0 and earlier
+- Architecture and database-model reviews by phase, security reviewer, stack checklists, and the `check.mjs` runner (commands, forbidden patterns, secrets).

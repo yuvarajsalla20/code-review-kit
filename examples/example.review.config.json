@@ -47,6 +47,22 @@
       "src/store.ts"
     ]
   },
+  "structure": {
+    "roots": ["src", "App.tsx"],
+    "extra": [],
+    "ignore": ["tests"],
+    "layers": [
+      { "name": "shared", "paths": ["src/shared"], "mayImport": [] },
+      { "name": "data", "paths": ["src/data"], "mayImport": ["shared"] },
+      { "name": "components", "paths": ["src/components"], "mayImport": ["shared"] },
+      { "name": "screens", "paths": ["src/screens"], "mayImport": ["shared", "data", "components"] }
+    ],
+    "restricted": [{ "module": "firebase", "onlyIn": ["src/data"] }],
+    "gate": ["cycles", "layers", "restricted"],
+    "duplicates": { "minLines": 6, "minChars": 120 },
+    "repeated": { "minFiles": 3, "ignore": [] },
+    "size": { "maxFileLines": 300, "maxFunctionLines": 80 }
+  },
   "commands": [
     {
       "name": "types",

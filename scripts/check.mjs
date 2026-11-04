@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // review-kit automated checks. No dependencies. Run from the project root:
 //   node path/to/review-kit/scripts/check.mjs [path/to/review.config.json]
-// Exit code 1 if any command fails or any forbidden/secret match is found.
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+// Exit code 1 if any command fails, any forbidden or secret match is found, or a gated structure check finds something.
+import { readFileSync, statSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, relative } from 'node:path';
+import { walk } from './lib/files.mjs';
+import { runStructure, CHECKS } from './structure/index.mjs';
 
 const root = process.cwd();
 const configPath = process.argv[2] || join(root, 'review.config.json');
@@ -13,7 +15,6 @@ if (!existsSync(configPath)) {
   process.exit(2);
 }
 const config = JSON.parse(readFileSync(configPath, 'utf8'));
-const TEXT = /\.(ts|tsx|js|jsx|mjs|cjs|json|md|html|css|rules|yml|yaml|env|txt)$/i;
 const SECRET_PATTERNS = [
   ['private key block', /-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----/],
   ['service account key', /"private_key"\s*:/],
@@ -23,16 +24,6 @@ const SECRET_PATTERNS = [
 
 const results = [];
 const fail = (section, line) => results.push({ section, line });
-
-function* walk(dir, skip) {
-  for (const name of readdirSync(dir)) {
-    if (skip.includes(name)) continue;
-    const full = join(dir, name);
-    const info = statSync(full);
-    if (info.isDirectory()) yield* walk(full, skip);
-    else if (TEXT.test(name) && info.size < 1_000_000) yield full;
-  }
-}
 
 // 1. Commands
 console.log('== Commands ==');
@@ -78,6 +69,19 @@ for (const base of secretCfg.paths) {
   }
 }
 console.log(`${secretHits ? 'FAIL' : 'PASS'}  secrets scan${secretHits ? ` (${secretHits})` : ''}`);
+
+// 4. Structure: circular imports, layer rules, duplicates, repeated values, size
+if (config.structure) {
+  console.log('\n== Structure ==');
+  const structure = runStructure(config, root);
+  for (const check of CHECKS) {
+    const rows = structure.findings.filter((f) => f.check === check);
+    const gate = structure.gate.includes(check);
+    console.log(`${rows.length ? (gate ? 'FAIL' : 'REVIEW') : 'PASS'}  ${check}${rows.length ? ` (${rows.length})` : ''}`);
+    if (gate) for (const f of rows) fail(`structure:${check}`, `${f.where}  ${f.what}`);
+  }
+  if (structure.findings.some((f) => !f.gate)) console.log('Review items are not failures: run scripts/structure.mjs --report to get the table for the owner.');
+}
 
 // Report
 if (results.length) {

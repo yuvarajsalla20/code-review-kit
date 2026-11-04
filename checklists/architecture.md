@@ -6,11 +6,12 @@
 - [ ] Nothing is built for a scale or feature the project does not need yet.
 
 ## Structure
-- [ ] Each module has one clear job; no file or component does several unrelated things.
-- [ ] Dependencies point one way (screens use logic; logic does not import screens). No cycles.
-- [ ] Logic that appears in two places lives in one shared place.
+- [ ] Each module has one clear job; no file or component does several unrelated things. (`structure.mjs` lists oversized files and functions; judge whether the size comes from several jobs.)
+- [ ] Dependencies point one way (screens use logic; logic does not import screens). No cycles. (Enforced by `structure.mjs`: the `layers` map and the `cycles` check. A project without a `layers` map has not been checked.)
+- [ ] Logic that appears in two places lives in one shared place. (`structure.mjs` finds repeated blocks, lists and text; confirm each is really the same job.)
 - [ ] Platform differences (web/iOS/Android) are isolated behind small interfaces.
-- [ ] External services (database, auth, rates, analytics) sit behind one thin layer, so swapping or mocking one touches one place.
+- [ ] External services (database, auth, rates, analytics) sit behind one thin layer, so swapping or mocking one touches one place. (Enforce with `restricted` in the `structure` block.)
+- [ ] Adding the next planned feature, or a new item of an existing kind (type, option, screen), changes one place.
 
 ## Boundaries and reuse
 - [ ] App-specific code and reusable packages are separated; packages contain nothing app-specific.
