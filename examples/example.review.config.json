@@ -1,5 +1,6 @@
 {
   "name": "example-notes-app",
+  "timezone": "America/Chicago",
   "stack": [
     "react-native-expo"
   ],

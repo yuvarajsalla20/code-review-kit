@@ -19,7 +19,7 @@ export const PLAIN = {
     privacy: { meaning: 'The privacy policy does not mention something the app uses', impact: 'The store can reject the app, and users are not told what is collected.' },
   },
   tests: {
-    untested: { meaning: 'Important code that no test covers', impact: 'A change there can break a promise, such as a reminder that does not ring, without anyone noticing.' },
+    untested: { meaning: 'Important code that no test covers', impact: 'A change there can break something the project promises, such as a feature that stops working, without anyone noticing.' },
   },
   agents: {
     frontmatter: { meaning: "A reviewer's setup block is wrong or missing", impact: 'The reviewer may not load, may have the wrong permissions, or may be able to edit your code.' },

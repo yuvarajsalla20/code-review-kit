@@ -3,6 +3,7 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { assemble } from '../lib/findings.mjs';
 
 export const CHECKS = ['lockfile', 'appConfig', 'permissions', 'tracked', 'privacy'];
 const DEFAULTS = { appConfig: 'app.json', privacyFile: null, lockfileCommand: 'npm ci --dry-run --ignore-scripts', gate: ['lockfile', 'appConfig', 'permissions', 'tracked'] };
@@ -85,8 +86,7 @@ const privacy = (root, s) => {
 
 export function runRelease(config, root) {
   const s = { ...DEFAULTS, ...config.release };
-  const gated = new Set(s.gate);
   const found = { lockfile: lockfile(root, s), appConfig: appConfig(root, s), permissions: permissions(root, s), tracked: tracked(root), privacy: privacy(root, s) };
-  const findings = CHECKS.flatMap((check) => found[check].map((f) => ({ check, gate: gated.has(check), places: [{ file: f.where, from: 1 }], ...f })));
-  return { findings, counts: Object.fromEntries(CHECKS.map((c) => [c, found[c].length])), gate: s.gate, settings: s };
+  for (const rows of Object.values(found)) for (const f of rows) f.places ??= [{ file: f.where, from: 1 }];
+  return { ...assemble(CHECKS, found, s.gate), settings: s };
 }

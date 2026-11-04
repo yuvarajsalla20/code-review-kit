@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.9.0 - 2026-11-04
+- First review of the kit's own code applied (18 findings).
+  - The summary no longer says Ready when no check ran or an area name is mistyped; it stops with a clear message (exit 2).
+  - A mistyped gate name, forbidden or secrets path, or `tests.risky` now stops the run instead of switching a check off. A config that is not valid JSON gives one clear line.
+  - `check.mjs` runs every area in `scripts/areas.mjs` (structure, release, tests and agents), and the summary uses the same list.
+  - Reviewer tools are checked against a read-only allow-list (`agents.allowedTools`), so Write, NotebookEdit or any new write tool is flagged.
+  - The test map counts a file as reached when a test runs it as a separate program, so those false rows are gone.
+  - Written once: findings and counts (`lib/findings.mjs`), the stand-alone command (`runCli`), and the summary tables (`summary/tables.mjs`) that both the page and the markdown use.
+  - The summary's time zone defaults to UTC (set `timezone`). Plain wording no longer uses an example from one app.
+- The kit has its own `review.config.json`, so it reviews itself with one command.
+- 16 new tests, including: gated checks that could pass silently, all secret patterns, typo protection, the agents command, the version in code, manifest, README and CHANGELOG, plain wording for every check, and the page and markdown showing the same tables.
+
 ## 1.8.0 - 2026-11-04
 - Plain-language summary for a whole project: `scripts/summary.mjs`, the `review-summary` skill and `templates/summary-report.md`.
   - Verdict (Ready, Ready after fixes, Not ready), the five items to fix first, one decision table across all checks, technical detail by area, a glossary, and what could not be checked.

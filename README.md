@@ -36,8 +36,8 @@ Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which 
 | `rules/` | `review-rules.md`: the conduct rules, the severity scale and the owner of each topic, written once. Every agent points to it. |
 | `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `focused-review` (one area: release, tests, usability or performance), `agent-review` (the kit checks its own agents), `review-summary` (one plain-language report for the whole project), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
 | `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes), release, tests, ux, performance. Add more as you learn. |
-| `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and the structure checks. |
-| `scripts/summary.mjs` | One plain-language summary of every check: verdict (Ready, Ready after fixes, Not ready), the five things to fix first, one decision table, terms explained, and what could not be checked. Writes markdown (`--report`) and a self-contained page (`--html`) with the version and date on a gray footer. Takes the agents' verified changes with `--extra`. |
+| `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and every check area whose block is in the config (structure, release, tests, agents; the list is `scripts/areas.mjs`). A mistyped path, gate name or area stops the run with a clear message instead of switching a check off. |
+| `scripts/summary.mjs` | One plain-language summary of every check: verdict (Ready, Ready after fixes, Not ready), the five things to fix first, one decision table, terms explained, and what could not be checked. Writes markdown (`--report`) and a self-contained page (`--html`) with the version and date on a gray footer. Takes the agents' verified changes with `--extra`. Refuses to say Ready when no check ran. Time stamps use the `timezone` setting (default UTC). |
 | `scripts/agents.mjs` | The kit checks its own agents: front matter, required sections, broken references, the pointer to the shared rules, repeated lines. Needs no config. Run from the kit root with `--report`. |
 | `scripts/release.mjs`, `scripts/testmap.mjs` | Release readiness (lock file, app settings, permission texts, tracked secret files, privacy keywords) and risky files no test reaches. Both take `--report` and `--json`; settings are the `release` and `tests` blocks in `review.config.json`. |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
@@ -82,6 +82,10 @@ Added in 1.4.0. Set up with a `structure` block in `review.config.json` (a ready
 
 The scripts count; the `structure-review` skill starts the `structure-reviewer` agent, which opens every row, drops what is not real, writes the concrete fix and hands over one table with a **Your decision** column. Fix only after that.
 
+## The kit reviews itself
+
+The kit has its own `review.config.json`. From the kit root, `node scripts/check.mjs` runs its tests and checks, and `node scripts/summary.mjs --report summary.md --html summary.html` writes the plain-language report. Test fixtures that look like secrets live under `tests/`, which the secret scan skips.
+
 ## Install as a Claude Code plugin
 
 Add this repository as a plugin marketplace source, or clone it and point Claude Code at the folder. The plugin manifest is `.claude-plugin/plugin.json`.
@@ -94,4 +98,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.8.0 - 2026-11-04 3:45 PM CT
+Version 1.9.0 - 2026-11-04 3:27 PM CT

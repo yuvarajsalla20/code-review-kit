@@ -5,14 +5,15 @@ import { join } from 'node:path';
 const SUPPORTED = ['name', 'description', 'model', 'effort', 'maxTurns', 'tools', 'disallowedTools', 'skills', 'memory', 'background', 'omitClaudeMd', 'isolation', 'color', 'experimental'];
 const IGNORED = ['permissionMode', 'hooks', 'mcpServers', 'initialPrompt'];
 const SHARED = /rules\/review-rules\.md/;
-const WRITERS = ['Edit', 'Write', 'NotebookEdit'];
+/** The tools a reviewer may have. Anything else (Edit, Write, NotebookEdit, MultiEdit, a new write-capable tool) is flagged. */
+export const READ_ONLY_TOOLS = ['Read', 'Grep', 'Glob', 'Bash', 'LS', 'WebFetch', 'WebSearch'];
 
 const row = (where, what, fix, effort = 'small', places = []) => ({ where, what, fix, effort, places });
 /** One row for a problem several agents share, so the owner decides once. */
 const grouped = (agents, what, fix, effort) => (agents.length ? [row(agents.map((a) => a.file).join(', '), what, fix, effort, agents.map((a) => ({ file: a.file, from: 1 })))] : []);
 const has = (agent, re) => re.test(agent.body);
 
-export function frontmatter(agents) {
+export function frontmatter(agents, { allowedTools = READ_ONLY_TOOLS } = {}) {
   return agents.flatMap((a) => {
     if (!a.front) return [row(a.file, 'No front matter, so the agent loads with every field ignored and takes its name from the file', 'Add the `---` block with name, description and tools.')];
     const f = a.front;
@@ -20,8 +21,8 @@ export function frontmatter(agents) {
     if (f.name !== a.stem) out.push(row(a.file, `\`name\` is ${f.name ? `"${f.name}"` : 'missing'} but the file is ${a.stem}.md`, 'Make the name match the file name.'));
     if (!f.description) out.push(row(a.file, 'No `description`, so nothing tells Claude when to use this agent', 'Add one line: what it judges and that it never edits.'));
     if (!a.tools.length) out.push(row(a.file, 'No `tools` line, so the agent inherits every tool, including Edit and Write', 'List the read-only tools: Read, Grep, Glob, Bash.'));
-    const writers = a.tools.filter((t) => WRITERS.includes(t));
-    if (writers.length) out.push(row(a.file, `Tools include ${writers.join(', ')}, but reviewers must never edit`, 'Remove them.'));
+    const unsafe = a.tools.filter((t) => !allowedTools.includes(t));
+    if (unsafe.length) out.push(row(a.file, `Tools include ${unsafe.join(', ')}, which ${unsafe.length > 1 ? 'are' : 'is'} not on the read-only list (${allowedTools.join(', ')}); reviewers must never edit`, 'Remove them, or add a tool to `agents.allowedTools` if it is read-only.'));
     const odd = Object.keys(f).filter((k) => IGNORED.includes(k) || !SUPPORTED.includes(k));
     if (odd.length) out.push(row(a.file, `Field${odd.length > 1 ? 's' : ''} ${odd.join(', ')} ${odd.length > 1 ? 'are' : 'is'} ignored or unknown in plugin agents`, 'Remove it.'));
     return out;

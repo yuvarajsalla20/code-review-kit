@@ -1,23 +1,17 @@
 #!/usr/bin/env node
 // review-kit automated checks. No dependencies. Run from the project root:
 //   node path/to/review-kit/scripts/check.mjs [path/to/review.config.json]
-// Exit code 1 if any command fails, any forbidden or secret match is found, or a gated structure check finds something.
+// Exit code 1 if any command fails, any forbidden or secret match is found, or a gated check (structure, release, tests, agents) finds something.
 import { readFileSync, statSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, relative } from 'node:path';
+import { AREAS } from './areas.mjs';
+import { guard, loadConfig, parseArgs } from './lib/cli.mjs';
 import { walk } from './lib/files.mjs';
 import { printSection } from './lib/section.mjs';
-import { runStructure, CHECKS } from './structure/index.mjs';
-import { runRelease, CHECKS as RELEASE_CHECKS } from './release/index.mjs';
-import { runTestMap, CHECKS as TEST_CHECKS } from './testmap/index.mjs';
 
 const root = process.cwd();
-const configPath = process.argv[2] || join(root, 'review.config.json');
-if (!existsSync(configPath)) {
-  console.error(`No config at ${configPath}. Copy templates/review.config.json first.`);
-  process.exit(2);
-}
-const config = JSON.parse(readFileSync(configPath, 'utf8'));
+const config = loadConfig(root, parseArgs().configPath);
 const SECRET_PATTERNS = [
   ['private key block', /-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----/],
   ['service account key', /"private_key"\s*:/],
@@ -47,7 +41,11 @@ for (const rule of config.forbidden || []) {
   let hits = 0;
   for (const base of rule.paths || ['.']) {
     const start = join(root, base);
-    if (!existsSync(start)) continue;
+    if (!existsSync(start)) {
+      fail(`forbidden:${rule.name}`, `path not found: ${base} (check the spelling in review.config.json)`);
+      hits++;
+      continue;
+    }
     const files = statSync(start).isDirectory() ? walk(start, ['node_modules', '.git']) : [start];
     for (const file of files) {
       readFileSync(file, 'utf8').split('\n').forEach((text, i) => {
@@ -63,6 +61,11 @@ console.log('\n== Secrets ==');
 let secretHits = 0;
 const secretCfg = config.secrets || { paths: ['.'], skip: ['node_modules', '.git'] };
 for (const base of secretCfg.paths) {
+  if (!existsSync(join(root, base))) {
+    fail('secret:path', `path not found: ${base} (check secrets.paths in review.config.json)`);
+    secretHits++;
+    continue;
+  }
   for (const file of walk(join(root, base), secretCfg.skip || [])) {
     readFileSync(file, 'utf8').split('\n').forEach((text, i) => {
       for (const [label, re] of SECRET_PATTERNS) {
@@ -73,14 +76,10 @@ for (const base of secretCfg.paths) {
 }
 console.log(`${secretHits ? 'FAIL' : 'PASS'}  secrets scan${secretHits ? ` (${secretHits})` : ''}`);
 
-// 4. Structure: circular imports, layer rules, duplicates, repeated values, size
-if (config.structure) printSection('Structure', CHECKS, runStructure(config, root), fail, 'Review items are not failures: run scripts/structure.mjs --report to get the table for the owner.');
-
-// 5. Release readiness: lock file, app settings, permission texts, secret files, privacy policy
-if (config.release) printSection('Release', RELEASE_CHECKS, runRelease(config, root), fail, 'Review items are not failures: run scripts/release.mjs --report to get the table for the owner.');
-
-// 6. Test map: risky files no test reaches
-if (config.tests) printSection('Tests', TEST_CHECKS, runTestMap(config, root), fail, 'Review items are not failures: run scripts/testmap.mjs --report to get the table for the owner.');
+// 4. The script-based areas: structure, release, tests, agents (each when the config has its block)
+for (const area of AREAS.filter((a) => config[a.key])) {
+  printSection(area.title, area.checks, guard(() => area.run(config, root)), fail, `Review items are not failures: run scripts/${area.script} --report to get the table for the owner.`);
+}
 
 // Report
 if (results.length) {

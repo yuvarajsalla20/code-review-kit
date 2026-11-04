@@ -43,3 +43,25 @@ test('report and command line', () => {
   const run = (cwd) => spawnSync('node', [join(import.meta.dirname, '..', 'scripts', 'testmap.mjs')], { cwd, encoding: 'utf8' });
   assert.equal(run(root).status, 1, 'gated when the owner puts untested in the gate list');
 });
+
+test('a file a test runs as a separate program counts as reached, with what it imports', () => {
+  const root = project({
+    'scripts/run.mjs': "import { helper } from './lib/helper.mjs';\nconsole.log(helper);",
+    'scripts/lib/helper.mjs': 'export const helper = 1;',
+    'scripts/other.mjs': 'export const other = 2;',
+    'tests/run.test.mjs': "spawnSync('node', [join(kit, 'scripts/run.mjs')]);",
+  });
+  const r = runTestMap({ structure: { roots: ['scripts'] }, tests: { risky: ['scripts'] } }, root);
+  assert.deepEqual(r.findings.map((f) => f.where), ['scripts/other.mjs']);
+});
+
+test('a unique file name in quotes counts as a mention; a shared name does not', () => {
+  const root = project({
+    'scripts/run.mjs': 'export const run = 1;',
+    'scripts/a/index.mjs': 'export const a = 1;',
+    'scripts/b/index.mjs': 'export const b = 1;',
+    'tests/t.test.mjs': "spawnSync('node', [join(dir, 'scripts', 'run.mjs'), 'index.mjs']);",
+  });
+  const r = runTestMap({ structure: { roots: ['scripts'] }, tests: { risky: ['scripts'] } }, root);
+  assert.deepEqual(r.findings.map((f) => f.where).sort(), ['scripts/a/index.mjs', 'scripts/b/index.mjs']);
+});

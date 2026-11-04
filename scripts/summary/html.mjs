@@ -1,8 +1,9 @@
 // The summary as one self-contained page: readable on a phone, light and dark, version and date on a gray footer.
-import { plainLine } from './model.mjs';
+import { VERDICT_NOTE, countRows, sections } from './tables.mjs';
 
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const table = (head, rows) => `<div class="scroll"><table><thead><tr>${head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c, i) => `<td data-label="${esc(head[i])}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const table = ({ head, rows, empty }) => (rows.length ? tableHtml(head, rows) : `<p class="note">${esc(empty)}</p>`);
+const tableHtml = (head, rows) => `<div class="scroll"><table><thead><tr>${head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c, i) => `<td data-label="${esc(head[i])}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 
 const CSS = `:root{--bg:#f7f6fb;--card:#fff;--text:#1d1a2b;--muted:#5b5870;--line:#e2dfee;--accent:#5b34d6;--ok:#17653b;--okbg:#dcf5e6;--warn:#7a4a00;--warnbg:#fff0cf;--bad:#8a1c1c;--badbg:#fde0e0;--foot:#d9d9de;--foottext:#3b3b44}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14101f;--card:#1e1830;--text:#f0edfa;--muted:#b3aecb;--line:#352d52;--accent:#b79cff;--ok:#8fe3b5;--okbg:#17382a;--warn:#ffd27a;--warnbg:#3d2f10;--bad:#ffb3b3;--badbg:#431a1a;--foot:#3a3a42;--foottext:#d4d4dc}}
@@ -17,16 +18,15 @@ main{max-width:980px;margin:0 auto;padding:24px 16px 40px}h1{font-size:1.6rem;ma
 footer{background-color:var(--foot);color:var(--foottext);text-align:center;padding:14px 16px;font-size:.85rem}`;
 
 export function toHtml(m) {
-  const cls = { Ready: 'v-ready', 'Ready after fixes': 'v-after', 'Not ready': 'v-not' }[m.verdict];
+  const s = sections(m);
   const section = (title, body) => `<h2>${esc(title)}</h2>${body}`;
-  const none = '<p class="note">None found.</p>';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Review summary: ${esc(m.project)}</title><style>${CSS}</style></head><body><main>
 <h1>Review summary: ${esc(m.project)}</h1><p class="meta">Kit ${esc(m.kitVersion)} &middot; Checks run: ${esc(m.checked.join(', ') || 'none')}</p>
-<div class="card"><span class="verdict ${cls}">${esc(m.verdict)}</span> <p>${esc(m.verdictMeaning)}</p><div class="counts"><span>Must fix: ${m.counts.mustFix}</span><span>Blocker: ${m.counts.Blocker}</span><span>High: ${m.counts.High}</span><span>Medium: ${m.counts.Medium}</span><span>Low: ${m.counts.Low}</span></div><p class="note">Not ready if any item must be fixed (a failed gated check or a Blocker). Ready after fixes if High items remain. Ready otherwise.</p></div>
-${section('Fix first', m.fixFirst.length ? table(['#', 'What could go wrong', 'Where', 'Effort'], m.fixFirst.map((r) => [r.n, plainLine(r), r.where, r.effort])) : '<p class="note">Nothing to fix.</p>')}
-${section('Your decisions', `<p class="note">Mark the last column and send it back; nothing is changed until you do.</p>${m.rows.length ? table(['#', 'What it means', 'Why it matters', 'Suggested fix', 'Effort', 'Area', 'Your decision'], m.rows.map((r) => [r.n, `${r.meaning} (${r.where})`, r.impact, r.fix, r.effort, r.area, ''])) : none}`)}
-${section('By area', m.areas.map((a) => `<h3>${esc(a.title)}</h3>${a.rows.length ? table(['#', 'Where', 'What (technical)', 'Trigger'], a.rows.map((r) => [r.n, r.where, r.technical, r.trigger || '-'])) : none}`).join(''))}
-${section('Terms used', m.terms.length ? table(['Term', 'Meaning'], m.terms.map((x) => [x.term, x.meaning])) : '<p class="note">None.</p>')}
+<div class="card"><span class="verdict v-${m.verdictKey}">${esc(m.verdict)}</span> <p>${esc(m.verdictMeaning)}</p><div class="counts">${countRows(m).map(([label, n]) => `<span>${esc(label)}: ${n}</span>`).join('')}</div><p class="note">${esc(VERDICT_NOTE)}</p></div>
+${section(s.fixFirst.title, table(s.fixFirst))}
+${section(s.decisions.title, `<p class="note">${esc(s.decisions.note)}</p>${table(s.decisions)}`)}
+${section('By area', s.areas.map((a) => `<h3>${esc(a.title)}</h3>${table(a)}`).join(''))}
+${section(s.terms.title, table(s.terms))}
 ${section('What we could not check', `<ul>${m.couldNot.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`)}
 </main><footer>${esc(m.footer)}</footer></body></html>`;
 }

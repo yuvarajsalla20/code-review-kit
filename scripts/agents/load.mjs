@@ -7,7 +7,7 @@ const MARKDOWN = /\.md$/i;
 export function parseFront(text) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if (!m) return { front: null, body: text, offset: 0 };
-  const front = Object.fromEntries(m[1].split('\n').map((l) => l.match(/^([\w-]+):\s*(.*)$/)).filter(Boolean).map(([, k, v]) => [k, v.trim()]));
+  const front = Object.fromEntries(m[1].split(/\r?\n/).map((l) => l.match(/^([\w-]+):\s*(.*)$/)).filter(Boolean).map(([, k, v]) => [k, v.trim()]));
   return { front, body: m[2], offset: text.slice(0, text.length - m[2].length).split('\n').length - 1 };
 }
 

@@ -8,6 +8,7 @@ import { checkLayers, checkRestricted } from './layers.mjs';
 import { findDuplicateBlocks, findRepeatedValues } from './dupes.mjs';
 import { findOversize } from './size.mjs';
 import * as describe from './describe.mjs';
+import { assemble } from '../lib/findings.mjs';
 
 export const CHECKS = ['cycles', 'layers', 'restricted', 'duplicates', 'repeated', 'size'];
 const DEFAULTS = {
@@ -31,14 +32,12 @@ export const settingsFor = (config) => {
 
 export function runStructure(config, root) {
   const s = settingsFor(config);
-  const gated = new Set(s.gate);
   const sourceFiles = listFiles(root, s.roots, { ignore: s.ignore, match: SOURCE });
   const texts = new Map(sourceFiles.map((f) => [f, stripComments(readText(root, f))]));
   const valueTexts = new Map(texts);
   for (const f of listFiles(root, s.extra, { ignore: s.ignore, match: TEXT })) if (!valueTexts.has(f)) valueTexts.set(f, stripComments(readText(root, f)));
 
   const { edges, externals } = buildGraph(texts, s.aliases);
-  const findings = [];
 
   const big = findOversize(texts, s.size);
   const found = [
@@ -50,9 +49,7 @@ export function runStructure(config, root) {
     ['size', big.files, describe.bigFile],
     ['size', big.functions, describe.bigFunction],
   ];
-  for (const [check, items, say] of found) for (const item of items) findings.push({ check, gate: gated.has(check), ...say(item) });
-
-  const counts = Object.fromEntries(CHECKS.map((c) => [c, findings.filter((f) => f.check === c).length]));
-  const layered = s.layers.length;
-  return { findings, counts, files: sourceFiles.length, gate: s.gate, layered, settings: s };
+  const rows = Object.fromEntries(CHECKS.map((c) => [c, []]));
+  for (const [check, items, say] of found) rows[check].push(...items.map(say));
+  return { ...assemble(CHECKS, rows, s.gate), files: sourceFiles.length, layered: s.layers.length, settings: s };
 }

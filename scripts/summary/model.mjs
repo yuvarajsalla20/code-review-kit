@@ -14,7 +14,7 @@ const fromScript = ({ area, result }) =>
   });
 
 /** `extra`: `{ drop: [keys], override: { key: {...fields} }, add: [{ area, severity, where, what, meaning, impact, fix, effort, trigger }], couldNot: [text] }`, written after the agents verified the rows. */
-export function buildModel(collected, extra = {}, { now = new Date(), timeZone = 'America/Chicago', project = '', kitVersion = '' } = {}) {
+export function buildModel(collected, extra = {}, { now = new Date(), timeZone = 'UTC', project = '', kitVersion = '' } = {}) {
   const drop = new Set(extra.drop ?? []);
   const scripted = collected.flatMap(fromScript).filter((r) => !drop.has(r.key)).map((r) => ({ ...r, ...(extra.override?.[r.key] ?? {}) }));
   const added = (extra.add ?? []).map((a) => ({ check: 'agent', key: keyOf(a.area, 'agent', a.where), mustFix: a.severity === 'Blocker', trigger: '', meaning: a.meaning ?? a.what, impact: a.impact ?? '', technical: a.what, effort: 'medium', ...a }));
@@ -25,13 +25,14 @@ export function buildModel(collected, extra = {}, { now = new Date(), timeZone =
 
   const count = (s) => rows.filter((r) => r.severity === s).length;
   const mustFix = rows.filter((r) => r.mustFix).length;
-  const verdict = mustFix ? 'Not ready' : count('High') ? 'Ready after fixes' : 'Ready';
+  const verdictKey = mustFix ? 'not' : count('High') ? 'after' : 'ready';
+  const verdict = { not: 'Not ready', after: 'Ready after fixes', ready: 'Ready' }[verdictKey];
   const terms = [...new Map([...(mustFix && rows.some((r) => r.mustFix && r.check !== 'agent') ? [GATED] : []), ...rows.map((r) => r.term).filter(Boolean)].map((x) => [x.term, x])).values()];
   const areas = [...new Set([...collected.map((c) => c.area), ...rows.map((r) => r.area)])];
-  const meaning = { 'Not ready': 'Fix or accept the must-fix items before releasing.', 'Ready after fixes': 'Nothing blocks the release, but the High items are worth fixing first.', Ready: 'Nothing blocks the release.' }[verdict];
+  const meaning = { not: 'Fix or accept the must-fix items before releasing.', after: 'Nothing blocks the release, but the High items are worth fixing first.', ready: 'Nothing blocks the release.' }[verdictKey];
   const stamp = new Intl.DateTimeFormat('en-US', { timeZone, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(now);
   return {
-    project, kitVersion, checked: collected.map((c) => c.area), verdict, verdictMeaning: meaning,
+    project, kitVersion, checked: collected.map((c) => c.area), verdict, verdictKey, verdictMeaning: meaning,
     counts: { mustFix, ...Object.fromEntries(SEVERITY.map((s) => [s, count(s)])) },
     rows, fixFirst: rows.slice(0, 5), terms,
     areas: areas.map((area) => ({ area, title: AREA_TITLES[area] ?? area, rows: rows.filter((r) => r.area === area) })),

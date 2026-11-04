@@ -9,13 +9,16 @@ import { buildModel, keyOf } from '../scripts/summary/model.mjs';
 import { collect } from '../scripts/summary/collect.mjs';
 import { toMarkdown } from '../scripts/summary/markdown.mjs';
 import { toHtml } from '../scripts/summary/html.mjs';
+import { AREAS } from '../scripts/areas.mjs';
+import { AREA_TITLES, COULD_NOT, PLAIN } from '../scripts/summary/plain.mjs';
+import { sections } from '../scripts/summary/tables.mjs';
 import { project } from './helpers.mjs';
 
 const kit = join(dirname(fileURLToPath(import.meta.url)), '..');
 const NOW = new Date('2026-11-04T21:30:00Z');
 const config = { name: 'demo', structure: { roots: ['src'], layers: [], gate: ['cycles'], size: { maxFileLines: 3 } } };
 const files = { 'src/a.ts': "import { b } from './b';\nexport const a = b;\nexport const a2 = 1;\nexport const a3 = 2;\n", 'src/b.ts': "import { a } from './a';\nexport const b = a;\n" };
-const model = (extra, cfg = config, f = files) => buildModel(collect(cfg, project(f)), extra, { now: NOW, project: 'demo', kitVersion: '9.9.9' });
+const model = (extra, cfg = config, f = files, timeZone = 'America/Chicago') => buildModel(collect(cfg, project(f)), extra, { now: NOW, project: 'demo', kitVersion: '9.9.9', timeZone });
 
 test('parseArgs reads every value flag and keeps the config path', () => {
   const a = parseArgs(['cfg.json', '--report', 'r.md', '--html', 'p.html', '--extra', 'e.json', '--areas', 'a,b', '--json']);
@@ -80,4 +83,40 @@ test('the kit summarises its own agents with --areas and no config', () => {
   const r = spawnSync('node', [join(kit, 'scripts/summary.mjs'), '--areas', 'agents'], { cwd: kit, encoding: 'utf8' });
   assert.equal(r.status, 0);
   assert.match(r.stdout, /Checks run: agents/);
+});
+
+test('the time zone defaults to UTC and follows the setting', () => {
+  assert.match(buildModel([], {}, { now: NOW, kitVersion: '9.9.9' }).footer, /9:30 PM UTC$/);
+  assert.match(model().footer, /3:30 PM CST$/);
+});
+
+test('a request that would run no checks is an error, never Ready', () => {
+  const root = project({ ...files, 'review.config.json': { name: 'none' } });
+  const run = (...a) => spawnSync('node', [join(kit, 'scripts/summary.mjs'), ...a], { cwd: root, encoding: 'utf8' });
+  const none = run();
+  assert.equal(none.status, 2);
+  assert.match(none.stderr, /No checks to run/);
+  const typo = run('--areas', 'strcture');
+  assert.equal(typo.status, 2);
+  assert.match(typo.stderr, /Unknown area: strcture/);
+  assert.doesNotMatch(none.stdout + typo.stdout, /Ready/);
+});
+
+test('every check of every area has plain wording, a title and a could-not-check line', () => {
+  for (const { key, checks } of AREAS) {
+    assert.deepEqual(checks.filter((c) => !PLAIN[key]?.[c]?.meaning || !PLAIN[key][c].impact), [], `${key} plain wording`);
+    assert.ok(COULD_NOT[key], `${key} could-not-check`);
+    assert.ok(AREA_TITLES[key], `${key} title`);
+  }
+});
+
+test('the page and the markdown show the same tables', () => {
+  const m = model({ add: [{ area: 'tests', severity: 'Low', where: 'src/x.ts', what: 'w', meaning: 'm', impact: 'i', fix: 'a fix', effort: 'small' }] });
+  const md = toMarkdown(m);
+  const html = toHtml(m);
+  const s = sections(m);
+  for (const t of [s.fixFirst, s.decisions, s.terms, ...s.areas]) for (const row of t.rows) for (const c of row.filter((x) => x !== '' && x !== '-')) {
+    assert.ok(md.includes(String(c).replace(/\|/g, '\\|')), `markdown has ${c}`);
+    assert.ok(html.includes(String(c).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')), `page has ${c}`);
+  }
 });

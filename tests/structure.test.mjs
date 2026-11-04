@@ -169,3 +169,10 @@ test('the command line exits 1 on a gated finding, 0 when clean, and writes the 
   assert.equal(gated.status, 1);
   assert.match(gated.stdout, /FAIL {2}cycles \(1\)/);
 });
+
+test('the default gate includes restricted packages', () => {
+  const root = project({ 'src/data/a.ts': "import f from 'firebase/app';", 'src/ui/b.ts': "import f from 'firebase/app';" });
+  const r = runStructure({ structure: { roots: ['src'], restricted: [{ module: 'firebase', onlyIn: ['src/data'] }] } }, root);
+  assert.equal(r.findings.filter((f) => f.check === 'restricted').length, 1);
+  assert.ok(r.findings.find((f) => f.check === 'restricted').gate);
+});

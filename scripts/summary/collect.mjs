@@ -1,14 +1,13 @@
-// Runs each script-based check the config asks for. Returns `[{ area, result }]`.
-import { runAgents } from '../agents/index.mjs';
-import { runRelease } from '../release/index.mjs';
-import { runStructure } from '../structure/index.mjs';
-import { runTestMap } from '../testmap/index.mjs';
+// Runs each check area the config asks for (or the areas named). Returns `[{ area, result }]`.
+import { AREAS } from '../areas.mjs';
+import { ConfigError } from '../lib/findings.mjs';
 
-const RUNNERS = { structure: runStructure, release: runRelease, tests: runTestMap, agents: runAgents };
-const BLOCKS = { structure: 'structure', release: 'release', tests: 'tests', agents: 'agents' };
-
-/** `areas` (a list) overrides the choice; otherwise every area whose block is in the config runs. */
+/** A request that would run nothing is an error: a summary that says Ready after checking nothing is worse than no summary. */
 export function collect(config, root, areas) {
-  const chosen = areas?.length ? areas : Object.keys(RUNNERS).filter((a) => config[BLOCKS[a]]);
-  return chosen.filter((a) => RUNNERS[a]).map((area) => ({ area, result: RUNNERS[area](config, root) }));
+  const known = AREAS.map((a) => a.key);
+  const unknown = (areas ?? []).filter((a) => !known.includes(a));
+  if (unknown.length) throw new ConfigError(`Unknown area${unknown.length > 1 ? 's' : ''}: ${unknown.join(', ')}. The areas are: ${known.join(', ')}.`);
+  const chosen = AREAS.filter((a) => (areas?.length ? areas.includes(a.key) : config[a.key]));
+  if (!chosen.length) throw new ConfigError(`No checks to run. Add a ${known.join(', ')} block to review.config.json, or pass --areas.`);
+  return chosen.map((a) => ({ area: a.key, result: a.run(config, root) }));
 }
