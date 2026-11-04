@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.0 - 2026-11-04
+- Speed review is part of a normal review now. `code-review` and `review-summary` start `performance-reviewer` by default; say "skip speed" to leave it out for a small change.
+- `performance-reviewer` has a library mode. Set `design.kind` to `"library"` (default `"app"`) and it asks what a project pays per render, per install and per mount instead of launch path and users. `checklists/performance.md` has a matching Library section.
+- New `scripts/perf.mjs` and a `speed` area in `check.mjs` and `summary.mjs` (works with no config). Five candidate checks: large images and media (`maxAssetKb`, default 300), heavy packages (moment, lodash, plus your own list), animations with no native driver (a variable or `Platform.OS !== 'web'` is accepted), timers and listeners with no stop (listeners only in code that mounts and unmounts), long lists drawn with `.map` inside a ScrollView. Nothing gates by default (`speed.gate`), and every row is a text match that the reviewer opens before it counts.
+- `walk` and `listFiles` take `maxBytes`, so a check can look at files over 1 MB.
+- 8 new tests, including self-closing and nested tags, files over 1 MB, a mistyped gate name, and no-config use. The kit's own layer map and risky areas include `scripts/perf/`.
+
 ## 1.9.3 - 2026-11-04
 - README explains what happens when you run the kit: the flow, the files you get, how to read the verdict and the decision column, and how to try it. A sample report is in `examples/sample-report/`.
 

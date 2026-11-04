@@ -11,14 +11,14 @@ export const ALWAYS_SKIP = ['node_modules', '.git', 'dist', 'build', '.expo', 'c
 
 export const toPosix = (p) => p.split(sep).join('/');
 
-/** Every matching file under `dir`, skipping folders named in `skip`. */
-export function* walk(dir, skip = [], match = TEXT) {
+/** Every matching file under `dir` smaller than `maxBytes`, skipping folders named in `skip`. */
+export function* walk(dir, skip = [], match = TEXT, maxBytes = 1_000_000) {
   for (const name of readdirSync(dir)) {
     if (skip.includes(name)) continue;
     const full = join(dir, name);
     const info = statSync(full);
-    if (info.isDirectory()) yield* walk(full, skip, match);
-    else if (match.test(name) && info.size < 1_000_000) yield full;
+    if (info.isDirectory()) yield* walk(full, skip, match, maxBytes);
+    else if (match.test(name) && info.size < maxBytes) yield full;
   }
 }
 
@@ -30,14 +30,14 @@ export const inside = (path, prefix) => {
 
 /**
  * The files a check should look at: everything under `roots` (folders or single files) that matches `match`,
- * minus anything under an `ignore` prefix. Paths are relative to `root`, with forward slashes.
+ * minus anything under an `ignore` prefix. `maxBytes` (default 1 MB) lets a check look at big files, such as images. Paths are relative to `root`, with forward slashes.
  */
-export function listFiles(root, roots, { ignore = [], match = SOURCE } = {}) {
+export function listFiles(root, roots, { ignore = [], match = SOURCE, maxBytes } = {}) {
   const found = new Set();
   for (const base of roots) {
     const start = join(root, base);
     if (!existsSync(start)) continue;
-    const files = statSync(start).isDirectory() ? walk(start, ALWAYS_SKIP, match) : [start];
+    const files = statSync(start).isDirectory() ? walk(start, ALWAYS_SKIP, match, maxBytes) : [start];
     for (const file of files) found.add(toPosix(relative(root, file)));
   }
   return [...found].filter((f) => !ignore.some((i) => inside(f, i))).sort();

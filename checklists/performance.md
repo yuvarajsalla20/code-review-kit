@@ -2,6 +2,14 @@
 
 Lists, animation and bundle items for React Native are in `react-native-expo.md`; read counts and listeners for Firestore are in `firebase.md`. This list is about the measured path and the stated scale.
 
+For a library (`design.kind` is `library`), use **Library** below and skip Launch and Scale.
+
+## Library
+- [ ] Nothing is created on every render that a child receives as a prop (styles, objects, functions), unless it is memoised.
+- [ ] Importing the package runs no work; unused parts can be dropped by the app's bundler.
+- [ ] Timers, listeners and subscriptions it starts are stopped on unmount; no module-level cache grows without a limit.
+- [ ] Size added to an app and render count of the busiest component are measured in a host app.
+
 ## Launch
 - [ ] The first usable screen does not wait on the network, sign-in or a full data load.
 - [ ] Work at startup is the minimum; the rest runs after the first screen.

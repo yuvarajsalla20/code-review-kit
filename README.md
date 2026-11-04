@@ -9,7 +9,7 @@ Reusable pre-release review for any project. Findings first, fixes only after th
 | Design | `architecture-review` | Before building (design-only mode) or any time the design changes |
 | Design | `db-model-review` | When the data model or database rules are drafted or changing |
 | Build and release | `structure-review` | Duplicates, circular imports, layer rules, size: scripts count, `structure-reviewer` verifies |
-| Build and release | `code-review` | Before each release; includes the security reviewer |
+| Build and release | `code-review` | Before each release; includes the security reviewer and, by default, the speed reviewer (say "skip speed" to leave it out) |
 
 Run them in that order. Earlier phases are cheaper to fix.
 
@@ -58,7 +58,7 @@ Agents sit in one folder per question they answer. Claude Code names each one `<
 | `clean-code` | Is the code tidy and modular? | `reviewer` (all-round), `structure-reviewer` | `structure-review`, `code-review` | general | `structure.mjs` | structure-report, report |
 | `safety` | Can it be attacked, or break a promise? | `security-reviewer`, `test-reviewer` | `code-review`, `focused-review` | security, tests, failure-paths, money-dates | `testmap.mjs` | decision-report |
 | `ship` | Will the build and the store accept it? | `release-reviewer` | `focused-review` | release, app-store | `release.mjs` | manual-test |
-| `people` | Can everyone use it, and is it fast? | `ux-reviewer`, `performance-reviewer` | `focused-review` | ux, performance | none | decision-report |
+| `people` | Can everyone use it, and is it fast? | `ux-reviewer`, `performance-reviewer` | `focused-review` | ux, performance | `perf.mjs` | decision-report |
 | `meta` | Are the reviewers themselves any good? | `agent-reviewer` | `agent-review` | agents | `agents.mjs` | decision-report |
 
 Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which topic), `check.mjs`, `scripts/lib/`, `review.config.json` (template and example), the `code-review` skill that runs the sequence, the `review-summary` skill and `summary.mjs` that turn every check into one plain-language report, the `decision-report` template, and the `react-native-expo` and `firebase` checklists.
@@ -71,10 +71,11 @@ Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which 
 | `rules/` | `review-rules.md`: the conduct rules, the severity scale and the owner of each topic, written once. Every agent points to it. |
 | `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `focused-review` (one area: release, tests, usability or performance), `agent-review` (the kit checks its own agents), `review-summary` (one plain-language report for the whole project), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
 | `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes), release, tests, ux, performance. Add more as you learn. |
-| `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and every check area whose block is in the config (structure, release, tests, agents; the list is `scripts/areas.mjs`). A mistyped path, gate name or area stops the run with a clear message instead of switching a check off. |
+| `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and every check area whose block is in the config (structure, release, tests, agents, speed; the list is `scripts/areas.mjs`). A mistyped path, gate name or area stops the run with a clear message instead of switching a check off. |
 | `scripts/summary.mjs` | One plain-language summary of every check: verdict (Ready, Ready after fixes, Not ready), the five things to fix first, one decision table, terms explained, and what could not be checked. Writes markdown (`--report`) and a self-contained page (`--html`) with the version and date on a gray footer. Takes the agents' verified changes with `--extra`. Refuses to say Ready when no check ran. Time stamps use the `timezone` setting (default UTC). |
 | `scripts/agents.mjs` | The kit checks its own agents: front matter, required sections, broken references, the pointer to the shared rules, the tool allow-list (`agents.allowedTools`), repeated lines, unused agents, length. Needs no config. Run from the kit root with `--report`. |
 | `scripts/release.mjs`, `scripts/testmap.mjs` | Release readiness (lock file, app settings, permission texts, tracked secret files, privacy keywords) and risky files no test reaches. Both take `--report` and `--json`; settings are the `release` and `tests` blocks in `review.config.json`. |
+| `scripts/perf.mjs` | Speed and cost candidates: large images and media, heavy packages, animations without the native driver, timers and listeners with no stop, long lists drawn with `.map` inside a ScrollView. Works with no config; the `speed` block changes the settings. Advisory: nothing gates unless `speed.gate` says so. Code lives in `scripts/perf/`. See **Speed checks**. |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
 | `tests/` | Offline tests for the scripts: `node --test tests/*.test.mjs`. |
 | `templates/` | `review.config.json`, `report.md`, `architecture-report.md`, `structure-report.md`, `db-report.md`, `summary-report.md`, `decision-report.md`, `architecture-intake.md`, `manual-test.md`. |
@@ -117,6 +118,29 @@ Added in 1.4.0. Set up with a `structure` block in `review.config.json` (a ready
 
 The scripts count; the `structure-review` skill starts the `structure-reviewer` agent, which opens every row, drops what is not real, writes the concrete fix and hands over one table with a **Your decision** column. Fix only after that.
 
+## Speed checks
+
+Added in 1.10.0. `node <kit>/scripts/perf.mjs --report speed-report.md` from the project root. No dependencies, text-based, works without a config. It finds **candidates**: each row is a text match, and `performance-reviewer` opens it and keeps it only if the code confirms it. Nothing gates by default.
+
+| Check | Finds | How sure |
+|---|---|---|
+| `assets` | Images, audio, video and fonts over `maxAssetKb` (default 300), including files over 1 MB | High |
+| `heavy` | Packages in `dependencies` that the list marks heavy (moment and lodash by default; add yours under `heavy` as `name: reason`) | High |
+| `animation` | `Animated.timing`, `spring` or `decay` with no `useNativeDriver`, or `useNativeDriver: false`. A variable or `Platform.OS !== 'web'` is accepted. A layout animation (width, height, top) cannot use it: accept the row | High |
+| `cleanup` | A `setInterval` in a file with no `clearInterval`; an `addListener` or `addEventListener` in a file with `useEffect` (or `componentDidMount`) and no remove; `onSnapshot` or `onAuthStateChanged` called with its stop function thrown away. Listeners outside mounting code are skipped: they live as long as the app | Medium (a stop in another file is missed) |
+| `lists` | A `ScrollView` with children drawn by `.map`. Right for short lists, wrong for ones that grow | Medium |
+
+| `speed` key | Meaning | Default |
+|---|---|---|
+| `roots` | Source folders or files to read | `["src", "App.tsx"]` |
+| `assetRoots` | Where to look for large files | `["assets", "public", "src"]` |
+| `ignore` | Paths to leave out | `["tests"]` |
+| `maxAssetKb` | Size limit for one file | `300` |
+| `heavy` | Extra packages to flag, `{ "name": "why" }` | moment, lodash |
+| `gate` | Checks that fail the run | `[]` |
+
+Launch time, frame rate, memory and battery need a real, older phone and are never scripted. For a library (a kit, not an app) set `design.kind` to `"library"` in the config: `performance-reviewer` then asks what a project pays per render, per install and per mount, and skips launch path and stored data.
+
 ## The kit reviews itself
 
 The kit has its own `review.config.json`. From the kit root, `node scripts/check.mjs` runs its tests and checks, and `node scripts/summary.mjs --report summary.md --html summary.html` writes the plain-language report. Test fixtures that look like secrets live under `tests/`, which the secret scan skips.
@@ -133,4 +157,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.9.3 - 2026-11-04 3:45 PM CT
+Version 1.10.0 - 2026-11-04 5:00 PM CT

@@ -16,6 +16,7 @@
   ],
   "ignore": [],
   "design": {
+    "kind": "app",
     "goal": "A notes app for one person, synced through Firestore.",
     "scale": {
       "usersNow": 10,
@@ -71,6 +72,7 @@
     "gate": ["lockfile", "appConfig", "permissions", "tracked"]
   },
   "tests": { "paths": ["tests"], "risky": ["src/data", "src/notify"], "gate": [] },
+  "speed": { "roots": ["src", "App.tsx"], "assetRoots": ["assets", "public"], "maxAssetKb": 300, "gate": [] },
   "commands": [
     {
       "name": "types",

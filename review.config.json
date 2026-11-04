@@ -4,7 +4,7 @@
   "stack": ["node"],
   "riskyAreas": [
     "scripts/lib/: every script depends on it",
-    "scripts/structure/, release/, testmap/, agents/: a wrong finding sends the owner the wrong way",
+    "scripts/structure/, release/, testmap/, agents/, perf/: a wrong finding sends the owner the wrong way",
     "scripts/summary/: the verdict and the page"
   ],
   "design": {
@@ -18,7 +18,7 @@
     "roots": ["scripts"],
     "layers": [
       { "name": "lib", "paths": ["scripts/lib"], "mayImport": [] },
-      { "name": "checks", "paths": ["scripts/structure", "scripts/release", "scripts/testmap", "scripts/agents"], "mayImport": ["lib"] },
+      { "name": "checks", "paths": ["scripts/structure", "scripts/release", "scripts/testmap", "scripts/agents", "scripts/perf"], "mayImport": ["lib"] },
       { "name": "summary", "paths": ["scripts/summary"], "mayImport": ["lib", "checks"] }
     ],
     "gate": ["cycles", "layers", "restricted"]

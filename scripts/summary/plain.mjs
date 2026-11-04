@@ -30,6 +30,13 @@ export const PLAIN = {
     orphan: { meaning: 'No skill starts this reviewer', impact: 'It never runs.' },
     size: { meaning: 'A reviewer file is very long', impact: 'Long instructions are followed less carefully.' },
   },
+  speed: {
+    assets: { meaning: 'An image, sound or video file is very large', impact: 'It makes the download bigger and uses a lot of memory when shown, so the app starts slower and can be closed by the phone on older devices.' },
+    heavy: { meaning: 'The app uses a package known to be large', impact: 'It adds weight to every download and slows the first start, for little benefit when a smaller package does the same job.' },
+    animation: { meaning: 'An animation runs on the same thread as the app logic', impact: 'When the app is busy, the animation stutters instead of staying smooth.', term: t('native driver', 'A setting that lets the phone run an animation itself, so it stays smooth even when the app is busy.') },
+    cleanup: { meaning: 'Something is started and never stopped', impact: 'It keeps running after the screen is gone, draining battery and, for live database listeners, using up reads you may pay for.' },
+    lists: { meaning: 'A long list is drawn all at once instead of only what is on screen', impact: 'The screen opens slower and uses more memory as the list grows, until it lags or the app is closed.' },
+  },
 };
 
 export const AREA_TITLES = { structure: 'Code structure', release: 'Release readiness', tests: 'Tests', agents: 'Review agents', security: 'Security', usability: 'Usability', speed: 'Speed and cost', design: 'Design' };
@@ -42,4 +49,5 @@ export const COULD_NOT = {
   release: 'The signed build, the live store listing and the store account settings: these need the build service and App Store Connect.',
   tests: 'Whether a test checks the right thing, and behaviour only a real phone shows (alerts firing, permissions, the keyboard).',
   agents: 'Whether each reviewer finds real problems (that needs a trial on a project with planted defects) and whether an installed plugin finds its files.',
+  speed: 'Launch time, smoothness, memory and battery on a real, older phone, and how the stored data grows: a script only spots patterns that often cost speed.',
 };

@@ -14,6 +14,7 @@
     "Project-specific traps for the failure-paths pass, e.g. a second device on the same account"
   ],
   "design": {
+    "kind": "app",
     "goal": "One or two sentences: what it does and for whom.",
     "scale": { "usersNow": 10, "users12Months": 1000, "recordsPerUser": 500 },
     "budget": "free tiers only",
@@ -53,6 +54,7 @@
     "gate": ["lockfile", "appConfig", "permissions", "tracked"]
   },
   "tests": { "paths": ["tests"], "risky": ["src/data", "src/notify"], "gate": [] },
+  "speed": { "roots": ["src", "App.tsx"], "assetRoots": ["assets", "public"], "maxAssetKb": 300, "gate": [] },
   "commands": [
     { "name": "types", "run": "npx tsc --noEmit" }
   ],

@@ -14,10 +14,10 @@ One area, one independent reviewer, one table. Findings first, fixes only after 
 | Ready for the store or a build | `scripts/release.mjs` | `release-reviewer` | `release.md`, `app-store.md`, `react-native-expo.md` |
 | Do the tests protect what matters | `scripts/testmap.mjs` | `test-reviewer` | `tests.md`, `failure-paths.md` |
 | Usability and accessibility | none | `ux-reviewer` | `ux.md`, `react-native-expo.md` |
-| Speed, battery, data growth, cost | none | `performance-reviewer` | `performance.md`, `react-native-expo.md`, `firebase.md` |
+| Speed, battery, data growth, cost | `scripts/perf.mjs` (candidates, never a gate) | `performance-reviewer` | `performance.md`, `react-native-expo.md`, `firebase.md` |
 
 ## Steps
-1. **Config.** Read `review.config.json`. If the area needs a block it lacks (`release`, `tests`) or `design.scale`, copy it from `templates/review.config.json`, fill it from the project and show it before going on.
+1. **Config.** Read `review.config.json`. If the area needs a block it lacks (`release`, `tests`, `speed`) or `design.scale` (or `design.kind` for a library), copy it from `templates/review.config.json`, fill it from the project and show it before going on.
 2. **Script.** Where the table has one, run it from the project root with `--report <area>-report.md`. A gated check that finds something exits 1. Do not edit code.
 3. **Agent.** Start the area's agent in a fresh context with the project path, the config, the kit path, the script's draft report and none of your own opinions. The agent's rules live in its file under `agents/` (folders are listed in the README).
 4. **Check the Highs yourself** by reading the cited code. Drop anything you cannot confirm.
