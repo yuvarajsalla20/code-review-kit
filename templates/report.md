@@ -10,6 +10,7 @@ Reviewed: {date}   Kit: {kit-version}
 ### {n}. [{Blocker|High|Medium|Low}] {short title}
 - **Where:** `{file}:{line}`
 - **What breaks:** {one sentence}
+- **Impact:** {one plain sentence, no jargon: what could go wrong for the user}
 - **Trigger:** {exact steps or input}
 - **Suggested fix:** {one or two sentences}
 - **Confidence:** {confirmed | unverified, needs: ...}

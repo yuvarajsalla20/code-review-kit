@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.0 - 2026-11-04
+- Plain-language summary for a whole project: `scripts/summary.mjs`, the `review-summary` skill and `templates/summary-report.md`.
+  - Verdict (Ready, Ready after fixes, Not ready), the five items to fix first, one decision table across all checks, technical detail by area, a glossary, and what could not be checked.
+  - Writes markdown and a self-contained, phone-friendly page with light and dark themes and the version and date on a gray footer.
+  - Script findings come with plain wording (`scripts/summary/plain.mjs`). The agents' verified changes (drop, override, add) are merged with `--extra`.
+- Every finding now carries a one-sentence impact (`rules/review-rules.md`, `templates/report.md`).
+- `parseArgs` accepts `--html`, `--extra` and `--areas`.
+
 ## 1.7.1 - 2026-11-04
 - Second self-review applied. The owner table now settles the remaining overlaps: cross-user access and secrets in source are `security-reviewer`'s, tracked secret files are `release-reviewer`'s, Firestore read counts are `db-model-reviewer`'s, structure rows are evidence only for `reviewer`.
 - `architecture-review` runs `structure-review` and passes its verified report. `security-reviewer` has an Inputs list. The `agents` checklist and `agent-reviewer` check overlap against the owner table.

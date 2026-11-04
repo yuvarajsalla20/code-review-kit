@@ -26,7 +26,7 @@ Agents sit in one folder per question they answer. Claude Code names each one `<
 | `people` | Can everyone use it, and is it fast? | `ux-reviewer`, `performance-reviewer` | `focused-review` | ux, performance | none | decision-report |
 | `meta` | Are the reviewers themselves any good? | `agent-reviewer` | `agent-review` | agents | `agents.mjs` | decision-report |
 
-Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which topic), `check.mjs`, `scripts/lib/`, `review.config.json` (template and example), the `code-review` skill that runs the sequence, the `decision-report` template, and the `react-native-expo` and `firebase` checklists.
+Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which topic), `check.mjs`, `scripts/lib/`, `review.config.json` (template and example), the `code-review` skill that runs the sequence, the `review-summary` skill and `summary.mjs` that turn every check into one plain-language report, the `decision-report` template, and the `react-native-expo` and `firebase` checklists.
 
 ## What is inside
 
@@ -34,9 +34,10 @@ Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which 
 |---|---|
 | `agents/` | One folder per category, see **Categories** below. Every agent is read-only and runs in a fresh context. |
 | `rules/` | `review-rules.md`: the conduct rules, the severity scale and the owner of each topic, written once. Every agent points to it. |
-| `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `focused-review` (one area: release, tests, usability or performance), `agent-review` (the kit checks its own agents), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
+| `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `focused-review` (one area: release, tests, usability or performance), `agent-review` (the kit checks its own agents), `review-summary` (one plain-language report for the whole project), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
 | `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes), release, tests, ux, performance. Add more as you learn. |
 | `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and the structure checks. |
+| `scripts/summary.mjs` | One plain-language summary of every check: verdict (Ready, Ready after fixes, Not ready), the five things to fix first, one decision table, terms explained, and what could not be checked. Writes markdown (`--report`) and a self-contained page (`--html`) with the version and date on a gray footer. Takes the agents' verified changes with `--extra`. |
 | `scripts/agents.mjs` | The kit checks its own agents: front matter, required sections, broken references, the pointer to the shared rules, repeated lines. Needs no config. Run from the kit root with `--report`. |
 | `scripts/release.mjs`, `scripts/testmap.mjs` | Release readiness (lock file, app settings, permission texts, tracked secret files, privacy keywords) and risky files no test reaches. Both take `--report` and `--json`; settings are the `release` and `tests` blocks in `review.config.json`. |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
@@ -93,4 +94,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.7.1 - 2026-11-04 3:25 PM CT
+Version 1.8.0 - 2026-11-04 3:45 PM CT

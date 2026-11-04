@@ -2,12 +2,13 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { basename, join } from 'node:path';
 
-/** Flags and the config path: `--report out.md`, `--json`, and an optional config path as the first plain argument. */
+const VALUE_FLAGS = ['report', 'html', 'extra', 'areas'];
+
+/** Flags and the config path: `--report out.md`, `--html out.html`, `--extra file.json`, `--areas a,b`, `--json`, and an optional config path as the first plain argument. */
 export function parseArgs(argv = process.argv.slice(2)) {
-  const at = argv.indexOf('--report');
-  const report = at >= 0 ? argv[at + 1] : undefined;
-  const plain = argv.filter((a, i) => !a.startsWith('--') && !(at >= 0 && i === at + 1));
-  return { report, json: argv.includes('--json'), configPath: plain[0] };
+  const values = Object.fromEntries(VALUE_FLAGS.map((f) => [f, argv[argv.indexOf(`--${f}`) + 1]]).filter(([f]) => argv.includes(`--${f}`)));
+  const plain = argv.filter((a, i) => !a.startsWith('--') && !VALUE_FLAGS.some((f) => argv[i - 1] === `--${f}`));
+  return { ...values, json: argv.includes('--json'), configPath: plain[0] };
 }
 
 /** Reads review.config.json (or the path given); stops with exit code 2 and a hint when there is none, unless `optional` (then it returns `{}`). */

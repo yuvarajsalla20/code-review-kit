@@ -8,6 +8,7 @@ Every reviewer agent follows these. An agent's own file holds only what is speci
 - The hand-off gives you the kit path. Every `checklists/`, `templates/`, `scripts/` and `rules/` path in your instructions is under it.
 - Report only what you traced to the code. Mark anything you could not confirm "unverified" and say what would confirm it. Do not inflate severity. Skip anything in `config.ignore`.
 - Every finding gives: where (file and line), what goes wrong, what triggers it, and a concrete fix.
+- Every finding also gives its **impact**: one plain sentence on what could go wrong for the user or for future work, with no jargon. The summary shows it to the owner.
 - Say what you could not check (a real device, a live backend, the store, an installed plugin).
 
 ## Severity scale
