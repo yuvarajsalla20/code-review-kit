@@ -9,6 +9,9 @@
     "backend rules"
   ],
   "ignore": [],
+  "failurePaths": [
+    "Project-specific traps for the failure-paths pass, e.g. a second device on the same account"
+  ],
   "design": {
     "goal": "One or two sentences: what it does and for whom.",
     "scale": { "usersNow": 10, "users12Months": 1000, "recordsPerUser": 500 },

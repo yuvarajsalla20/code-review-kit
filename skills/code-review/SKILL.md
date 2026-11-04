@@ -12,6 +12,7 @@ Findings first, fixes only after the owner chooses. Never change code during the
 2. **Automated checks.** Run `node <kit>/scripts/check.mjs` from the project root. It runs the configured commands and scans for leftover dev code and secrets. Save the output.
 3. **Independent review.** Start the `reviewer` agent in a fresh context. Give it only the project path, the config and the check output, not your own opinions of the code.
 4. **Security review.** Start the `security-reviewer` agent the same way.
+4b. **Failure paths (on request, or automatically when the change touches `riskyAreas`).** Say "review with negative cases" to turn it on. Start a fresh `reviewer` with `checklists/failure-paths.md` plus the project's `failurePaths` notes from the config. It reports only verified findings, lists what it handled correctly, and lists what needs a device or emulator. After any fixes, run it again on the fix diff: fixes open new failure paths. It is slower and costs more than the normal pass, so it stays off for small changes.
 5. **Store compliance.** If `config.stores` is set, walk `checklists/app-store.md` (and `play-store.md` if present) against the project.
 6. **Merge.** De-duplicate, verify each Blocker and High yourself by reading the cited code, drop anything you cannot confirm, and write one report using `templates/report.md`.
 7. **Show the owner** the ranked list and ask which to fix. Fix only those, then re-run steps 2 to 4.

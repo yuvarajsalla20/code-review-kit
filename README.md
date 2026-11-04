@@ -18,7 +18,7 @@ Run them in that order. Earlier phases are cheaper to fix.
 |---|---|
 | `agents/` | `reviewer` (skeptical generalist), `security-reviewer` (attacker mindset), `architecture-reviewer` (design vs goals, scale, budget) and `db-model-reviewer` (Firestore model, access patterns, cost). Read-only. |
 | `skills/` | `code-review` (full pre-release review), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
-| `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore. Add more as you learn. |
+| `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes). Add more as you learn. |
 | `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan. |
 | `templates/` | `review.config.json`, `report.md`, `architecture-report.md`, `db-report.md`, `architecture-intake.md`, `manual-test.md`. |
 | `examples/` | A neutral sample config. Real project configs live in each project's own repo. |
@@ -44,4 +44,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.2.0 - 2026-11-02 09:20 CST
+Version 1.3.0 - 2026-11-03 11:40 PM CT
