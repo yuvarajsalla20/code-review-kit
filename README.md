@@ -13,6 +13,41 @@ Reusable pre-release review for any project. Findings first, fixes only after th
 
 Run them in that order. Earlier phases are cheaper to fix.
 
+## What happens when you run it
+
+```
+ you ask            scripts count            agents verify            kit writes             you decide
+ "review it"  -->   duplicates, loops,  -->  each row, in a fresh --> summary page and --> fix / accept / later
+                    missing tests, secrets   context, read-only       per-area reports       on every row
+```
+
+Nothing in your code changes until you mark the decision column.
+
+| You get | Who it is for | What is in it |
+|---|---|---|
+| `summary.md` and `summary.html` | Anyone, no technical background needed | The verdict, the five things to fix first, one decision table, a glossary, and what could not be checked |
+| `structure-report.md`, `release-report.md`, `test-map.md`, `agent-report.md` | The developer | One table per check: where, what, impact, suggested fix, effort |
+| `architecture-report.md`, `db-report.md` | The owner, at design time | Risks and options with trade-offs |
+| `verified.json` | The kit | Which rows the agents dropped, corrected or added |
+
+**Reading the verdict**
+
+| Verdict | Meaning |
+|---|---|
+| Not ready | Something must be fixed: a failed gated check or a Blocker |
+| Ready after fixes | No must-fix items, but High items remain |
+| Ready | Nothing blocks the release |
+
+A gate finding must be fixed or accepted. A review finding is your call. Each row in the decision table has a **Your decision** column: write `fix`, `accept` or `later` and send it back.
+
+**Try it**
+
+1. `node <kit>/scripts/summary.mjs --report summary.md --html summary.html` from your project root (needs `review.config.json`).
+2. Open `summary.html`, or ask Claude to "run the review-summary skill" for the full flow with agent verification.
+3. Mark the decisions. Claude fixes only the `fix` rows, then re-runs.
+
+A finished example for a small demo project is in `examples/sample-report/` (`summary.md` and `summary.html`).
+
 ## Categories
 
 Agents sit in one folder per question they answer. Claude Code names each one `<plugin>:<folder>:<name>`, for example `review-kit:safety:test-reviewer`. Checklists, templates and scripts stay in their own folders; this table is the map.
@@ -43,7 +78,7 @@ Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which 
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
 | `tests/` | Offline tests for the scripts: `node --test tests/*.test.mjs`. |
 | `templates/` | `review.config.json`, `report.md`, `architecture-report.md`, `structure-report.md`, `db-report.md`, `summary-report.md`, `decision-report.md`, `architecture-intake.md`, `manual-test.md`. |
-| `examples/` | A neutral sample config. Real project configs live in each project's own repo. |
+| `examples/` | A neutral sample config and a sample summary report. Real project configs live in each project's own repo. |
 
 ## Use it in a project
 
@@ -98,4 +133,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.9.2 - 2026-11-04 3:36 PM CT
+Version 1.9.3 - 2026-11-04 3:45 PM CT

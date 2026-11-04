@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.9.3 - 2026-11-04
+- README explains what happens when you run the kit: the flow, the files you get, how to read the verdict and the decision column, and how to try it. A sample report is in `examples/sample-report/`.
+
 ## 1.9.2 - 2026-11-04
 - Fresh agent-reviewer pass applied (8 findings).
   - Owner table: field validation in rules is db-model-reviewer's (a gap that lets one user write another's data is also security-reviewer's), rollback and update path is release-reviewer's, a caught error that shows nothing is ux-reviewer's, a swallowed error path in logic is reviewer's.
