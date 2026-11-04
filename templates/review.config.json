@@ -45,6 +45,13 @@
     "repeated": { "minFiles": 3, "ignore": [] },
     "size": { "maxFileLines": 300, "maxFunctionLines": 80 }
   },
+  "release": {
+    "appConfig": "app.json",
+    "privacyFile": "public/privacy.html",
+    "lockfileCommand": "npm ci --dry-run --ignore-scripts",
+    "gate": ["lockfile", "appConfig", "permissions", "tracked"]
+  },
+  "tests": { "paths": ["tests"], "risky": ["src/data", "src/notify"], "gate": [] },
   "commands": [
     { "name": "types", "run": "npx tsc --noEmit" }
   ],

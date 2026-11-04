@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { project } from './helpers.mjs';
 import { stripComments, withoutImports } from '../scripts/lib/source.mjs';
 import { parseImports, resolveImport, buildGraph } from '../scripts/lib/imports.mjs';
 import { findCycles } from '../scripts/structure/cycles.mjs';
@@ -13,15 +13,6 @@ import { findOversize } from '../scripts/structure/size.mjs';
 import { runStructure } from '../scripts/structure/index.mjs';
 import { toMarkdown } from '../scripts/structure/report.mjs';
 
-/** Writes a small project to a temp folder and returns its path. */
-const project = (files) => {
-  const root = mkdtempSync(join(tmpdir(), 'review-kit-'));
-  for (const [name, text] of Object.entries(files)) {
-    mkdirSync(dirname(join(root, name)), { recursive: true });
-    writeFileSync(join(root, name), text);
-  }
-  return root;
-};
 const texts = (files) => new Map(Object.entries(files).map(([f, t]) => [f, stripComments(t)]));
 const block = (tag, n = 8) => Array.from({ length: n }, (_, i) => `const step${i}_${tag === 'same' ? '' : tag} = compute(value${i}, other${i}, 'label number ${i}');`).join('\n');
 
@@ -166,6 +157,11 @@ test('the command line exits 1 on a gated finding, 0 when clean, and writes the 
   assert.match(spawnSync('cat', [report], { encoding: 'utf8' }).stdout, /Circular imports/);
   const good = project({ 'review.config.json': JSON.stringify({ name: 'good' }), 'src/a.ts': 'export const a = 1;' });
   assert.equal(run(good).status, 0);
+  // A config path as the first argument, with and without --report.
+  const elsewhere = project({ 'other.json': JSON.stringify({ name: 'elsewhere' }), 'src/a.ts': "import './b';", 'src/b.ts': "import './a';" });
+  assert.equal(run(elsewhere, join(elsewhere, 'other.json')).status, 1);
+  assert.equal(run(elsewhere, join(elsewhere, 'other.json'), '--report', join(elsewhere, 'r.md')).status, 1);
+  assert.equal(run(elsewhere, '--report', join(elsewhere, 'r2.md'), join(elsewhere, 'other.json')).status, 1);
   const viaCheck = spawnSync('node', [join(kit, 'check.mjs')], { cwd: bad, encoding: 'utf8' });
   assert.equal(viaCheck.status, 0, 'check.mjs only runs structure when the config has a structure block');
   writeFileSync(join(bad, 'review.config.json'), JSON.stringify({ name: 'bad', structure: {} }));

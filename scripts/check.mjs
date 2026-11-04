@@ -6,7 +6,10 @@ import { readFileSync, statSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, relative } from 'node:path';
 import { walk } from './lib/files.mjs';
+import { printSection } from './lib/section.mjs';
 import { runStructure, CHECKS } from './structure/index.mjs';
+import { runRelease, CHECKS as RELEASE_CHECKS } from './release/index.mjs';
+import { runTestMap, CHECKS as TEST_CHECKS } from './testmap/index.mjs';
 
 const root = process.cwd();
 const configPath = process.argv[2] || join(root, 'review.config.json');
@@ -71,17 +74,13 @@ for (const base of secretCfg.paths) {
 console.log(`${secretHits ? 'FAIL' : 'PASS'}  secrets scan${secretHits ? ` (${secretHits})` : ''}`);
 
 // 4. Structure: circular imports, layer rules, duplicates, repeated values, size
-if (config.structure) {
-  console.log('\n== Structure ==');
-  const structure = runStructure(config, root);
-  for (const check of CHECKS) {
-    const rows = structure.findings.filter((f) => f.check === check);
-    const gate = structure.gate.includes(check);
-    console.log(`${rows.length ? (gate ? 'FAIL' : 'REVIEW') : 'PASS'}  ${check}${rows.length ? ` (${rows.length})` : ''}`);
-    if (gate) for (const f of rows) fail(`structure:${check}`, `${f.where}  ${f.what}`);
-  }
-  if (structure.findings.some((f) => !f.gate)) console.log('Review items are not failures: run scripts/structure.mjs --report to get the table for the owner.');
-}
+if (config.structure) printSection('Structure', CHECKS, runStructure(config, root), fail, 'Review items are not failures: run scripts/structure.mjs --report to get the table for the owner.');
+
+// 5. Release readiness: lock file, app settings, permission texts, secret files, privacy policy
+if (config.release) printSection('Release', RELEASE_CHECKS, runRelease(config, root), fail, 'Review items are not failures: run scripts/release.mjs --report to get the table for the owner.');
+
+// 6. Test map: risky files no test reaches
+if (config.tests) printSection('Tests', TEST_CHECKS, runTestMap(config, root), fail, 'Review items are not failures: run scripts/testmap.mjs --report to get the table for the owner.');
 
 // Report
 if (results.length) {

@@ -17,10 +17,11 @@ Run them in that order. Earlier phases are cheaper to fix.
 
 | Folder | Purpose |
 |---|---|
-| `agents/` | `reviewer` (skeptical generalist), `security-reviewer` (attacker mindset), `structure-reviewer` (verifies the structure tables, plug-in test), `architecture-reviewer` (design vs goals, scale, budget) and `db-model-reviewer` (Firestore model, access patterns, cost). Read-only. |
-| `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
-| `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes). Add more as you learn. |
+| `agents/` | `reviewer` (skeptical generalist), `security-reviewer` (attacker mindset), `structure-reviewer` (verifies the structure tables, plug-in test), `release-reviewer` (build and store readiness), `test-reviewer` (do tests protect the must-never-fail paths), `ux-reviewer` (accessibility, states, flows), `performance-reviewer` (launch, scale, battery, network), `architecture-reviewer` (design vs goals, scale, budget) and `db-model-reviewer` (Firestore model, access patterns, cost). Read-only. |
+| `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `focused-review` (one area: release, tests, usability or performance), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
+| `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes), release, tests, ux, performance. Add more as you learn. |
 | `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and the structure checks. |
+| `scripts/release.mjs`, `scripts/testmap.mjs` | Release readiness (lock file, app settings, permission texts, tracked secret files, privacy keywords) and risky files no test reaches. Both take `--report` and `--json`; settings are the `release` and `tests` blocks in `review.config.json`. |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
 | `tests/` | Offline tests for the scripts: `node --test tests/*.test.mjs`. |
 | `templates/` | `review.config.json`, `report.md`, `architecture-report.md`, `structure-report.md`, `db-report.md`, `architecture-intake.md`, `manual-test.md`. |
@@ -75,4 +76,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.4.1 - 2026-11-04 2:39 PM CT
+Version 1.5.0 - 2026-11-04 3:20 PM CT
