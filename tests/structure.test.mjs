@@ -176,3 +176,10 @@ test('the default gate includes restricted packages', () => {
   assert.equal(r.findings.filter((f) => f.check === 'restricted').length, 1);
   assert.ok(r.findings.find((f) => f.check === 'restricted').gate);
 });
+
+test('a loop made only of type imports is ignored by default and found when asked for', () => {
+  const files = { 'src/a.ts': "import type { B } from './b';\nexport type A = B;", 'src/b.ts': "import type { A } from './a';\nexport type B = A;" };
+  const count = (structure) => runStructure({ structure: { roots: ['src'], ...structure } }, project(files)).findings.filter((f) => f.check === 'cycles').length;
+  assert.equal(count({}), 0);
+  assert.equal(count({ includeTypeOnlyCycles: true }), 1);
+});

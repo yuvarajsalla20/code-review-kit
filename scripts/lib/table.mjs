@@ -1,5 +1,6 @@
 // Markdown pieces shared by every report: the summary table and the decision tables.
-const cell = (t) => String(t).replace(/\|/g, '\\|').replace(/\n/g, ' ');
+/** Text for one table cell: pipes escaped, line breaks flattened, empty values blank. */
+export const cell = (t) => String(t ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 
 export const header = (title, project, kitVersion, date, extra = '') => [`# ${title}: ${project}`, '', `Checked: ${date}   Kit: ${kitVersion}${extra}`, ''];
 

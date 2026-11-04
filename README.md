@@ -98,4 +98,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.9.0 - 2026-11-04 3:27 PM CT
+Version 1.9.1 - 2026-11-04 3:40 PM CT

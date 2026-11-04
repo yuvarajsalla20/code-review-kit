@@ -17,7 +17,7 @@ const fromScript = ({ area, result }) =>
 export function buildModel(collected, extra = {}, { now = new Date(), timeZone = 'UTC', project = '', kitVersion = '' } = {}) {
   const drop = new Set(extra.drop ?? []);
   const scripted = collected.flatMap(fromScript).filter((r) => !drop.has(r.key)).map((r) => ({ ...r, ...(extra.override?.[r.key] ?? {}) }));
-  const added = (extra.add ?? []).map((a) => ({ check: 'agent', key: keyOf(a.area, 'agent', a.where), mustFix: a.severity === 'Blocker', trigger: '', meaning: a.meaning ?? a.what, impact: a.impact ?? '', technical: a.what, effort: 'medium', ...a }));
+  const added = (extra.add ?? []).map((a) => ({ check: 'agent', key: keyOf(a.area, 'agent', a.where), trigger: '', meaning: a.meaning ?? a.what, impact: a.impact ?? '', technical: a.what, effort: 'medium', ...a }));
   const rows = [...scripted, ...added]
     .map((r) => ({ ...r, mustFix: r.mustFix || r.severity === 'Blocker' }))
     .sort((a, b) => b.mustFix - a.mustFix || SEVERITY.indexOf(a.severity) - SEVERITY.indexOf(b.severity) || EFFORT.indexOf(a.effort) - EFFORT.indexOf(b.effort))

@@ -1,7 +1,7 @@
 // The summary as markdown. The tables come from tables.mjs.
+import { cell } from '../lib/table.mjs';
 import { VERDICT_NOTE, countRows, sections } from './tables.mjs';
 
-const cell = (t) => String(t ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 const table = ({ head, rows, empty }) => (rows.length ? [`| ${head.join(' | ')} |`, `|${head.map(() => '---').join('|')}|`, ...rows.map((r) => `| ${r.map(cell).join(' | ')} |`), ''] : [empty, '']);
 
 export function toMarkdown(m) {

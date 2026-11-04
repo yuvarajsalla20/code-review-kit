@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.1 - 2026-11-04
+- The table-cell helper is written once (`lib/table.mjs`) and used by the summary. The "Blocker means must fix" rule is written once in `summary/model.mjs`.
+- New test: type-only import loops are ignored by default and found when `includeTypeOnlyCycles` is set.
+
 ## 1.9.0 - 2026-11-04
 - First review of the kit's own code applied (18 findings).
   - The summary no longer says Ready when no check ran or an area name is mistyped; it stops with a clear message (exit 2).
