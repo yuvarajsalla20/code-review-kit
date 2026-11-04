@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0 - 2026-11-04
+- Agents are grouped by the question they answer: `design/`, `clean-code/`, `safety/`, `ship/`, `people/`. Claude Code now names them `<plugin>:<folder>:<name>`, for example `review-kit:safety:test-reviewer`. The `name:` line in each file is unchanged.
+- README has a **Categories** table mapping every agent, skill, checklist, script and template to a category.
+- Plugin icon (`assets/icon.png`, 1024 px).
+- A test checks that each agent sits in a category folder and has a `name` and a `description`.
+
 ## 1.5.0 - 2026-11-04
 - Four new agents, each read-only and independent: `release-reviewer`, `test-reviewer`, `ux-reviewer`, `performance-reviewer`.
 - Two new scripts, dependency-free: `scripts/release.mjs` (lock file, app settings, permission texts, tracked secret files, privacy keywords) and `scripts/testmap.mjs` (risky files no test reaches). Both are also sections 5 and 6 of `check.mjs`.

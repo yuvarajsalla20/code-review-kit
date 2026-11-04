@@ -13,11 +13,25 @@ Reusable pre-release review for any project. Findings first, fixes only after th
 
 Run them in that order. Earlier phases are cheaper to fix.
 
+## Categories
+
+Agents sit in one folder per question they answer. Claude Code names each one `<plugin>:<folder>:<name>`, for example `review-kit:safety:test-reviewer`. Checklists, templates and scripts stay in their own folders; this table is the map.
+
+| Category | Question it answers | Agents (`agents/<category>/`) | Skills | Checklists | Scripts | Templates |
+|---|---|---|---|---|---|---|
+| `design` | Is the plan right? | `architecture-reviewer`, `db-model-reviewer` | `architecture-review`, `db-model-review` | architecture, db-firestore | none | architecture-intake, architecture-report, db-report |
+| `clean-code` | Is the code tidy and modular? | `reviewer` (all-round), `structure-reviewer` | `structure-review`, `code-review` | general | `structure.mjs` | structure-report, report |
+| `safety` | Can it be attacked, or break a promise? | `security-reviewer`, `test-reviewer` | `code-review`, `focused-review` | security, tests, failure-paths, money-dates | `testmap.mjs` | decision-report |
+| `ship` | Will the build and the store accept it? | `release-reviewer` | `focused-review` | release, app-store | `release.mjs` | manual-test |
+| `people` | Can everyone use it, and is it fast? | `ux-reviewer`, `performance-reviewer` | `focused-review` | ux, performance | none | decision-report |
+
+Shared by all: `check.mjs`, `scripts/lib/`, `review.config.json` (template and example), the `code-review` skill that runs the sequence, the `decision-report` template, and the `react-native-expo` and `firebase` checklists.
+
 ## What is inside
 
 | Folder | Purpose |
 |---|---|
-| `agents/` | `reviewer` (skeptical generalist), `security-reviewer` (attacker mindset), `structure-reviewer` (verifies the structure tables, plug-in test), `release-reviewer` (build and store readiness), `test-reviewer` (do tests protect the must-never-fail paths), `ux-reviewer` (accessibility, states, flows), `performance-reviewer` (launch, scale, battery, network), `architecture-reviewer` (design vs goals, scale, budget) and `db-model-reviewer` (Firestore model, access patterns, cost). Read-only. |
+| `agents/` | One folder per category, see **Categories** below. Every agent is read-only and runs in a fresh context. |
 | `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `focused-review` (one area: release, tests, usability or performance), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
 | `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes), release, tests, ux, performance. Add more as you learn. |
 | `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and the structure checks. |
@@ -76,4 +90,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.5.0 - 2026-11-04 3:20 PM CT
+Version 1.6.0 - 2026-11-04 3:05 PM CT
