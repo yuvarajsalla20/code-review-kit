@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0 - 2026-11-04
+- The kit reviews its own agents: `agent-reviewer` agent (new `meta/` category), `agent-review` skill, `agents` checklist and `scripts/agents.mjs`.
+  - Checks front matter, required sections, broken file and agent references, the pointer to the shared rules, repeated lines, unused agents and length.
+  - Front matter and broken references gate the run; the rest go to the owner as a decision table.
+- First self-review applied: the conduct rules, severity scale and a topic-owner table moved into `rules/review-rules.md`, so each topic has one owning agent and the rules are written once. Every agent points to it; skills pass the kit path; shell use is read-only or on a scratch copy.
+- Skill hand-offs fixed: `code-review` runs `release.mjs` and drops the missing `play-store.md`, `architecture-review` runs `structure.mjs`, `focused-review` turns `ux` and `performance` findings into table rows, `structure-review` asks for `design.next`.
+- `loadConfig` accepts an optional config. `tests/agents.test.mjs` covers the checks and runs them on the kit's own agents.
+
 ## 1.6.0 - 2026-11-04
 - Agents are grouped by the question they answer: `design/`, `clean-code/`, `safety/`, `ship/`, `people/`. Claude Code now names them `<plugin>:<folder>:<name>`, for example `review-kit:safety:test-reviewer`. The `name:` line in each file is unchanged.
 - README has a **Categories** table mapping every agent, skill, checklist, script and template to a category.

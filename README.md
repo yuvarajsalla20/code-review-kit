@@ -24,17 +24,20 @@ Agents sit in one folder per question they answer. Claude Code names each one `<
 | `safety` | Can it be attacked, or break a promise? | `security-reviewer`, `test-reviewer` | `code-review`, `focused-review` | security, tests, failure-paths, money-dates | `testmap.mjs` | decision-report |
 | `ship` | Will the build and the store accept it? | `release-reviewer` | `focused-review` | release, app-store | `release.mjs` | manual-test |
 | `people` | Can everyone use it, and is it fast? | `ux-reviewer`, `performance-reviewer` | `focused-review` | ux, performance | none | decision-report |
+| `meta` | Are the reviewers themselves any good? | `agent-reviewer` | `agent-review` | agents | `agents.mjs` | decision-report |
 
-Shared by all: `check.mjs`, `scripts/lib/`, `review.config.json` (template and example), the `code-review` skill that runs the sequence, the `decision-report` template, and the `react-native-expo` and `firebase` checklists.
+Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which topic), `check.mjs`, `scripts/lib/`, `review.config.json` (template and example), the `code-review` skill that runs the sequence, the `decision-report` template, and the `react-native-expo` and `firebase` checklists.
 
 ## What is inside
 
 | Folder | Purpose |
 |---|---|
 | `agents/` | One folder per category, see **Categories** below. Every agent is read-only and runs in a fresh context. |
+| `rules/` | `review-rules.md`: the conduct rules, the severity scale and the owner of each topic, written once. Every agent points to it. |
 | `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `focused-review` (one area: release, tests, usability or performance), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
 | `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes), release, tests, ux, performance. Add more as you learn. |
 | `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and the structure checks. |
+| `scripts/agents.mjs` | The kit checks its own agents: front matter, required sections, broken references, the pointer to the shared rules, repeated lines. Needs no config. Run from the kit root with `--report`. |
 | `scripts/release.mjs`, `scripts/testmap.mjs` | Release readiness (lock file, app settings, permission texts, tracked secret files, privacy keywords) and risky files no test reaches. Both take `--report` and `--json`; settings are the `release` and `tests` blocks in `review.config.json`. |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
 | `tests/` | Offline tests for the scripts: `node --test tests/*.test.mjs`. |
@@ -90,4 +93,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.6.0 - 2026-11-04 3:05 PM CT
+Version 1.7.0 - 2026-11-04 3:20 PM CT

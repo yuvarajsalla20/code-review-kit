@@ -10,9 +10,10 @@ export function parseArgs(argv = process.argv.slice(2)) {
   return { report, json: argv.includes('--json'), configPath: plain[0] };
 }
 
-/** Reads review.config.json (or the path given); stops with exit code 2 and a hint when there is none. */
-export function loadConfig(root, configPath) {
+/** Reads review.config.json (or the path given); stops with exit code 2 and a hint when there is none, unless `optional` (then it returns `{}`). */
+export function loadConfig(root, configPath, { optional = false } = {}) {
   const path = configPath || join(root, 'review.config.json');
+  if (!existsSync(path) && optional) return {};
   if (!existsSync(path)) {
     console.error(`No config at ${path}. Copy templates/review.config.json first.`);
     process.exit(2);
