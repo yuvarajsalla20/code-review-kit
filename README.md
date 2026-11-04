@@ -8,7 +8,7 @@ Reusable pre-release review for any project. Findings first, fixes only after th
 |---|---|---|
 | Design | `architecture-review` | Before building (design-only mode) or any time the design changes |
 | Design | `db-model-review` | When the data model or database rules are drafted or changing |
-| Build and release | `structure-review` | Duplicates, circular imports, layer rules, size: scripts count, the reviewer verifies |
+| Build and release | `structure-review` | Duplicates, circular imports, layer rules, size: scripts count, `structure-reviewer` verifies |
 | Build and release | `code-review` | Before each release; includes the security reviewer |
 
 Run them in that order. Earlier phases are cheaper to fix.
@@ -17,7 +17,7 @@ Run them in that order. Earlier phases are cheaper to fix.
 
 | Folder | Purpose |
 |---|---|
-| `agents/` | `reviewer` (skeptical generalist), `security-reviewer` (attacker mindset), `architecture-reviewer` (design vs goals, scale, budget) and `db-model-reviewer` (Firestore model, access patterns, cost). Read-only. |
+| `agents/` | `reviewer` (skeptical generalist), `security-reviewer` (attacker mindset), `structure-reviewer` (verifies the structure tables, plug-in test), `architecture-reviewer` (design vs goals, scale, budget) and `db-model-reviewer` (Firestore model, access patterns, cost). Read-only. |
 | `skills/` | `code-review` (full pre-release review), `structure-review` (duplicates, cycles, layers, size, with a decision table), `architecture-review` (interviews you first, then reviews the design), `db-model-review` (Firestore model and cost). |
 | `checklists/` | One file per area: general, money-dates, react-native-expo, firebase, security, app-store, architecture, db-firestore, failure-paths (negative cases; run on request or for risky changes). Add more as you learn. |
 | `scripts/check.mjs` | Dependency-free runner: your commands, forbidden patterns, secret scan, and the structure checks. |
@@ -61,7 +61,7 @@ Added in 1.4.0. Set up with a `structure` block in `review.config.json` (a ready
 | `restricted` | `[{ module, onlyIn }]` | none |
 | `gate` | Checks that fail the run | `["cycles","layers","restricted"]` |
 
-The scripts count; the `structure-review` skill makes the reviewer open every row, drop what is not real, write the concrete fix and hand over one table with a **Your decision** column. Fix only after that.
+The scripts count; the `structure-review` skill starts the `structure-reviewer` agent, which opens every row, drops what is not real, writes the concrete fix and hands over one table with a **Your decision** column. Fix only after that.
 
 ## Install as a Claude Code plugin
 
@@ -75,4 +75,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.4.0 - 2026-11-04 2:35 PM CT
+Version 1.4.1 - 2026-11-04 2:39 PM CT

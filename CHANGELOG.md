@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.1 - 2026-11-04
+- `structure-reviewer` agent: verifies the structure tables in a fresh context, writes concrete fixes and runs the plug-in test. The `structure-review` skill starts it.
+
 ## 1.4.0 - 2026-11-04
 - Structure checks, dependency-free: `scripts/structure.mjs` and the `structure` section of `check.mjs`.
   - Circular imports, layer rules and restricted packages (gate), duplicate code, repeated lists and text, and size (review).
