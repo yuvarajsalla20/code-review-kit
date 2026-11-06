@@ -28,4 +28,12 @@ export function decisionSections(titles, findings) {
   return out;
 }
 
+/** Rows the owner already accepted (they no longer count), and accepted-file entries that match nothing now. Empty when there are none. */
+export function acceptedSection(result) {
+  const out = [];
+  if (result.accepted?.length) out.push('## Accepted earlier', '', 'These rows were accepted in `review.accepted.json`. They do not count, and stay listed so nothing is hidden.', '', '| Where | What | Reason | Accepted on |', '|---|---|---|---|', ...result.accepted.map((f) => `| ${cell(f.where)} | ${cell(f.what)} | ${cell(f.reason)} | ${cell(f.date)} |`), '');
+  if (result.stale?.length) out.push('## Accepted entries that match nothing', '', 'The code changed, so these entries cover no row now. Remove them from `review.accepted.json`.', '', '| Check | File | Reason |', '|---|---|---|', ...result.stale.map((e) => `| ${cell(e.check)} | ${cell(e.file)} | ${cell(e.reason)} |`), '');
+  return out;
+}
+
 export const couldNotVerify = (lines) => ['## Could not verify', '', ...lines.map((l) => `- ${l}`), ''];

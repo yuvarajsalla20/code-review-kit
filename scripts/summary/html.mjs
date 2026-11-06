@@ -21,11 +21,12 @@ export function toHtml(m) {
   const s = sections(m);
   const section = (title, body) => `<h2>${esc(title)}</h2>${body}`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Review summary: ${esc(m.project)}</title><style>${CSS}</style></head><body><main>
-<h1>Review summary: ${esc(m.project)}</h1><p class="meta">Kit ${esc(m.kitVersion)} &middot; Checks run: ${esc(m.checked.join(', ') || 'none')}</p>
+<h1>Review summary: ${esc(m.project)}</h1><p class="meta">Kit ${esc(m.kitVersion)} &middot; Checks run: ${esc(m.checked.join(', ') || 'none')}</p><p class="meta">Agent verification: ${esc(m.verification)}</p>
 <div class="card"><span class="verdict v-${m.verdictKey}">${esc(m.verdict)}</span> <p>${esc(m.verdictMeaning)}</p><div class="counts">${countRows(m).map(([label, n]) => `<span>${esc(label)}: ${n}</span>`).join('')}</div><p class="note">${esc(VERDICT_NOTE)}</p></div>
 ${section(s.fixFirst.title, table(s.fixFirst))}
 ${section(s.decisions.title, `<p class="note">${esc(s.decisions.note)}</p>${table(s.decisions)}`)}
 ${section('By area', s.areas.map((a) => `<h3>${esc(a.title)}</h3>${table(a)}`).join(''))}
+${[s.accepted, s.stale].filter((x) => x.rows.length).map((x) => section(x.title, `<p class="note">${esc(x.note)}</p>${table(x)}`)).join('')}
 ${section(s.terms.title, table(s.terms))}
 ${section('What we could not check', `<ul>${m.couldNot.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`)}
 </main><footer>${esc(m.footer)}</footer></body></html>`;

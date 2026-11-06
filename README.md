@@ -141,6 +141,26 @@ Added in 1.10.0. `node <kit>/scripts/perf.mjs --report speed-report.md` from the
 
 Launch time, frame rate, memory and battery need a real, older phone and are never scripted. For a library (a kit, not an app) set `design.kind` to `"library"` in the config: `performance-reviewer` then asks what a project pays per render, per install and per mount, and skips launch path and stored data.
 
+## Added in 1.11.0
+
+| What | How |
+|---|---|
+| Accept a row once, with a reason | A `review.accepted.json` next to the config: a list of `{ "area", "check", "file", "reason", "date" }` (optional `"contains"` narrows it to one row of that file). Matching rows move to an "Accepted earlier" table and stop counting. An entry that matches nothing is reported as stale. The kit never writes this file; you do. |
+| Know what did not run | `check.mjs` ends with a "Not run" list of areas with no config block, and its last line says how many areas did not run. `node <kit>/scripts/upgrade.mjs` shows the starter blocks that are missing; add `--write` to put them in `review.config.json` (the only thing the kit ever writes, config only, nothing gated). |
+| Fewer speed false positives | A `useNativeDriver: false` next to an `.addListener(` is accepted; a list over an ALL_CAPS constant or a written-out array is skipped; an `onSnapshot` that is returned is not "thrown away". |
+| Kit version labels (`kits`, in `release`, advisory) | Compares `kitVersions` in `package.json` with the kits pinned by commit (`codeload.github.com/<owner>/<repo>/tar.gz/<sha>`). Always: a pinned kit with no label, or a label with no pin. With `release.kitsOnline: true`: a label whose tag is missing or points to another commit, and a newer tag. `release.kitsRemote` changes the remote URL (`{owner}`, `{repo}`). An unreachable remote is a row, not a crash. |
+| Who verified the rows | `verified.json` takes `verifiedBy`: `"agents"`, `"inline"` or nothing. The summary shows "Agent verification:" and says self-review when the assistant read the rows itself, or not run when nobody did. |
+| Mutation check (advisory) | `node <kit>/scripts/mutate.mjs --report mutation.md`, or `summary.mjs --areas mutation`. Needs a `mutation` block. It copies the project to a temporary folder, makes small wrong changes (`===`/`!==`, `>`/`>=`, `&&`/`||`, `true`/`false`, `!`), runs the tests for each, and lists the changes no test noticed. The project is never edited, nothing gates, and it is not part of `check.mjs` or the default summary. |
+
+| `mutation` key | Meaning | Default |
+|---|---|---|
+| `files` | Source files or folders to change (required) | none |
+| `run` | Test command, run in the copy | `npm test` |
+| `maxMutants` | Most changes to try (an even, repeatable sample) | `25` |
+| `timeoutSec` | Limit for one test run | `120` |
+| `copyIgnore` | Extra folders not to copy | `[]` |
+| `gate` | Checks that fail the run | `[]` |
+
 ## The kit reviews itself
 
 The kit has its own `review.config.json`. From the kit root, `node scripts/check.mjs` runs its tests and checks, and `node scripts/summary.mjs --report summary.md --html summary.html` writes the plain-language report. Test fixtures that look like secrets live under `tests/`, which the secret scan skips.
@@ -157,4 +177,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.10.0 - 2026-11-04 5:00 PM CT
+Version 1.11.0 - 2026-11-06 8:25 AM CT

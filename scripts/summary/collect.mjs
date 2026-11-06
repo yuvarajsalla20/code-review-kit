@@ -7,7 +7,7 @@ export function collect(config, root, areas) {
   const known = AREAS.map((a) => a.key);
   const unknown = (areas ?? []).filter((a) => !known.includes(a));
   if (unknown.length) throw new ConfigError(`Unknown area${unknown.length > 1 ? 's' : ''}: ${unknown.join(', ')}. The areas are: ${known.join(', ')}.`);
-  const chosen = AREAS.filter((a) => (areas?.length ? areas.includes(a.key) : config[a.key]));
+  const chosen = AREAS.filter((a) => (areas?.length ? areas.includes(a.key) : config[a.key] && !a.slow));
   if (!chosen.length) throw new ConfigError(`No checks to run. Add a ${known.join(', ')} block to review.config.json, or pass --areas.`);
   return chosen.map((a) => ({ area: a.key, result: a.run(config, root) }));
 }

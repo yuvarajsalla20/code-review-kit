@@ -20,6 +20,9 @@
 - [ ] The main task can be done from a blank start in few taps; every screen has a way back.
 - [ ] Permission requests come with context, and the app still works if they are refused.
 - [ ] Text is consistent: one word for one thing across screens, buttons and messages.
+- [ ] A required step the person has not done is visible: the screen points at what is missing (a highlight and words), and tapping a dimmed button explains why instead of doing nothing.
+- [ ] Anything that scrolls sideways shows it does (a partly visible item, an edge fade or an arrow), or the choices fit without scrolling.
+- [ ] The same kind of page looks the same in every part of the app: title position and size, spacing, and how a risky action (delete, sign out) is drawn. Compare the screens side by side.
 
 ## Needs a device
 - [ ] Screen-reader pass (reading order, labels), haptics, keyboard behaviour and a real small phone are checked by hand.

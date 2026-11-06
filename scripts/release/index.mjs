@@ -5,8 +5,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { assemble } from '../lib/findings.mjs';
 
-export const CHECKS = ['lockfile', 'appConfig', 'permissions', 'tracked', 'privacy'];
-const DEFAULTS = { appConfig: 'app.json', privacyFile: null, lockfileCommand: 'npm ci --dry-run --ignore-scripts', gate: ['lockfile', 'appConfig', 'permissions', 'tracked'] };
+export const CHECKS = ['lockfile', 'appConfig', 'permissions', 'tracked', 'privacy', 'kits'];
+const DEFAULTS = { appConfig: 'app.json', privacyFile: null, kitsOnline: false, kitsRemote: 'https://github.com/{owner}/{repo}.git', lockfileCommand: 'npm ci --dry-run --ignore-scripts', gate: ['lockfile', 'appConfig', 'permissions', 'tracked'] };
 
 /** Packages that need a written reason before the store accepts the app: package, the plugin options and plist keys that carry it. */
 const NEEDS_REASON = {
@@ -84,9 +84,49 @@ const privacy = (root, s) => {
   return Object.entries(MUST_MENTION).filter(([pkg, [re]]) => deps[pkg] && !re.test(text)).map(([, [, topic]]) => ({ where: s.privacyFile, what: `The app uses ${topic}, but the privacy policy does not mention it`, fix: `Add a sentence on what is collected through ${topic} and why. Update the App Store privacy answers to match.`, effort: 'small' }));
 };
 
+const PIN = /^https:\/\/codeload\.github\.com\/([^/]+)\/([^/]+)\/tar\.gz\/([0-9a-f]{7,40})$/;
+const semver = (tag) => (/^v?(\d+)\.(\d+)\.(\d+)$/.exec(tag) ?? []).slice(1).map(Number);
+const newer = (a, b) => { const x = semver(a); const y = semver(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i]; return false; };
+
+/** Tags of a remote repository as { tag: commit }. Returns null when the remote cannot be reached. */
+const remoteTags = (url, root) => {
+  const { ok, out } = run(`git ls-remote --tags "${url}"`, root);
+  if (!ok) return null;
+  const tags = {};
+  for (const line of out.split('\n')) {
+    const m = /^([0-9a-f]{40})\s+refs\/tags\/(.+?)(\^\{\})?$/.exec(line.trim());
+    if (m && (m[3] || !tags[m[2]])) tags[m[2]] = m[1];
+  }
+  return tags;
+};
+
+/** Shared kits pinned by commit: the labels in `kitVersions` should agree with the pins, and (when asked) with the remote tags. Advisory. */
+const kits = (root, s) => {
+  const pkg = readJson(root, 'package.json');
+  if (!pkg) return [];
+  const pins = Object.entries({ ...pkg.dependencies, ...pkg.devDependencies }).map(([name, url]) => [name, PIN.exec(String(url))]).filter(([, m]) => m).map(([name, m]) => ({ name, owner: m[1], repo: m[2], sha: m[3] }));
+  if (!pins.length) return [];
+  const labels = pkg.kitVersions ?? {};
+  const row = (what, fix) => ({ where: 'package.json', what, fix, effort: 'small' });
+  const out = [];
+  for (const p of pins) if (!labels[p.name]) out.push(row(`${p.name} is pinned to commit ${p.sha.slice(0, 7)} but \`kitVersions\` does not say which version that is`, `Add "${p.name}": "<tag>" to \`kitVersions\`, so a reader can tell what is installed.`));
+  for (const name of Object.keys(labels)) if (!pins.some((p) => p.name === name)) out.push(row(`\`kitVersions\` lists ${name}, but no dependency pins it by commit`, 'Remove the label, or pin the dependency again.'));
+  if (!s.kitsOnline) return out;
+  for (const p of pins) {
+    const label = labels[p.name];
+    const tags = remoteTags(s.kitsRemote.replace('{owner}', p.owner).replace('{repo}', p.repo), root);
+    if (!tags) { out.push(row(`Could not reach ${p.owner}/${p.repo} to compare tags`, 'Check the network, then run the check again.')); continue; }
+    if (label && !tags[label]) out.push(row(`${p.name} is labelled ${label}, but that tag does not exist on the remote`, 'Fix the label, or create the tag.'));
+    else if (label && !tags[label].startsWith(p.sha.slice(0, 7)) && !p.sha.startsWith(tags[label].slice(0, p.sha.length))) out.push(row(`${p.name} is labelled ${label}, but the pinned commit ${p.sha.slice(0, 7)} is not the commit of that tag`, 'Pin the tag\'s commit, or correct the label.'));
+    const latest = Object.keys(tags).filter((t) => semver(t).length).sort((a, b) => (newer(a, b) ? -1 : 1))[0];
+    if (label && latest && newer(latest, label)) out.push(row(`${p.name} ${latest} exists; the app is on ${label}`, 'Upgrade when you are ready; read the changelog first.'));
+  }
+  return out;
+};
+
 export function runRelease(config, root) {
   const s = { ...DEFAULTS, ...config.release };
-  const found = { lockfile: lockfile(root, s), appConfig: appConfig(root, s), permissions: permissions(root, s), tracked: tracked(root), privacy: privacy(root, s) };
+  const found = { lockfile: lockfile(root, s), appConfig: appConfig(root, s), permissions: permissions(root, s), tracked: tracked(root), privacy: privacy(root, s), kits: kits(root, s) };
   for (const rows of Object.values(found)) for (const f of rows) f.places ??= [{ file: f.where, from: 1 }];
   return { ...assemble(CHECKS, found, s.gate), settings: s };
 }

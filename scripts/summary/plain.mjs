@@ -16,6 +16,7 @@ export const PLAIN = {
     appConfig: { meaning: 'A setting the store needs is missing or wrong', impact: 'The store can reject the app, or the build can fail.' },
     permissions: { meaning: 'The app asks for a permission without a clear reason text', impact: 'Apple rejects apps that ask for a permission without telling the user why.' },
     tracked: { meaning: 'A secret file is stored in the repository', impact: 'Anyone who can read the repository can read the secret, so it must be replaced.' },
+    kits: { meaning: 'The kit version labels do not match the kits the app actually installs, or a newer kit exists', impact: 'You may think the app has a fix it does not, or miss one it could have.' },
     privacy: { meaning: 'The privacy policy does not mention something the app uses', impact: 'The store can reject the app, and users are not told what is collected.' },
   },
   tests: {
@@ -37,9 +38,12 @@ export const PLAIN = {
     cleanup: { meaning: 'Something is started and never stopped', impact: 'It keeps running after the screen is gone, draining battery and, for live database listeners, using up reads you may pay for.' },
     lists: { meaning: 'A long list is drawn all at once instead of only what is on screen', impact: 'The screen opens slower and uses more memory as the list grows, until it lags or the app is closed.' },
   },
+  mutation: {
+    survivors: { meaning: 'The code was changed to be wrong, and every test still passed', impact: 'A real mistake in this spot would not be caught before release.', term: t('mutation check', 'A trial where the code is changed a little on purpose, to see whether the tests notice. Advisory: it never blocks a release.') },
+  },
 };
 
-export const AREA_TITLES = { structure: 'Code structure', release: 'Release readiness', tests: 'Tests', agents: 'Review agents', security: 'Security', usability: 'Usability', speed: 'Speed and cost', design: 'Design' };
+export const AREA_TITLES = { structure: 'Code structure', release: 'Release readiness', tests: 'Tests', agents: 'Review agents', security: 'Security', usability: 'Usability', speed: 'Speed and cost', mutation: 'Test strength (advisory)', design: 'Design' };
 
 export const GATED = t('gated check', 'A check that must pass, or be accepted by you in the config, before release.');
 
@@ -49,5 +53,6 @@ export const COULD_NOT = {
   release: 'The signed build, the live store listing and the store account settings: these need the build service and App Store Connect.',
   tests: 'Whether a test checks the right thing, and behaviour only a real phone shows (alerts firing, permissions, the keyboard).',
   agents: 'Whether each reviewer finds real problems (that needs a trial on a project with planted defects) and whether an installed plugin finds its files.',
+  mutation: 'Only a sample of simple changes was tried, and some changes make no difference, so a missed change is a question for a person, not a proven gap.',
   speed: 'Launch time, smoothness, memory and battery on a real, older phone, and how the stored data grows: a script only spots patterns that often cost speed.',
 };

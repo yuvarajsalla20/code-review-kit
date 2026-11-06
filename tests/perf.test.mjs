@@ -99,3 +99,32 @@ test('the report has a decision column for every row and says what it could not 
   assert.match(md, /Review: you decide/);
   assert.doesNotMatch(md, /Gate: must be fixed/);
 });
+
+test('cleanup: a function whose body is the listener hands the stop function on, even across lines', () => {
+  const rows = (src) => found({ 'src/a.ts': src }, {}, 'cleanup').length;
+  assert.equal(rows('export const watch = (cb: F): Stop =>\n  onSnapshot(q, (s) => cb(s), fail);'), 0, 'arrow body on its own line');
+  assert.equal(rows('const watch = () => {\n  return onSnapshot(q, cb);\n};'), 0);
+  assert.equal(rows('const watch = () => {\n  onSnapshot(q, cb);\n};'), 1, 'a statement in a block throws the result away');
+  assert.equal(rows('onSnapshot(q, cb);'), 1, 'first statement in the file');
+  assert.equal(rows('const a = 1;\nonSnapshot(q, cb);'), 1);
+});
+
+test('animation: useNativeDriver false is accepted when the code listens to the value, and not otherwise', () => {
+  const listened = 'useEffect(() => {\n  const id = anim.addListener(({ value }) => setValue(value));\n  Animated.timing(anim, { toValue: 1, useNativeDriver: false }).start();\n}, []);';
+  const plain = 'useEffect(() => {\n  Animated.timing(anim, { toValue: 1, useNativeDriver: false }).start();\n}, []);';
+  const missing = 'const id = anim.addListener(f);\nAnimated.timing(anim, { toValue: 1 }).start();';
+  assert.equal(found({ 'src/a.tsx': listened }, {}, 'animation').length, 0);
+  assert.equal(found({ 'src/a.tsx': plain }, {}, 'animation').length, 1);
+  assert.equal(found({ 'src/a.tsx': missing }, {}, 'animation').length, 1, 'a missing flag is still flagged');
+  assert.equal(found({ 'src/a.tsx': `${'x\n'.repeat(30)}${listened}`.replace('anim.addListener', 'a.b') }, {}, 'animation').length, 1);
+});
+
+test('lists: a CONSTANT or a written-out array drawn with .map cannot grow, so it is not flagged', () => {
+  const view = (inner) => `<ScrollView>\n  {${inner}}\n</ScrollView>`;
+  const rows = (inner) => found({ 'src/a.tsx': view(inner) }, {}, 'lists').length;
+  assert.equal(rows('CURRENCY_LIST.map((c) => <Row key={c} />)'), 0);
+  assert.equal(rows("['a', 'b', 'c'].map((c) => <Row key={c} />)"), 0);
+  assert.equal(rows('items.map((c) => <Row key={c} />)'), 1);
+  assert.equal(rows('pick(items, id).map((c) => <Row key={c} />)'), 1, 'a call result can grow');
+  assert.equal(rows('Items.map((c) => <Row key={c} />)'), 1, 'only ALL_CAPS names count as constants');
+});

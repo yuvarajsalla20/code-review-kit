@@ -68,3 +68,48 @@ test('report and command line', () => {
   assert.equal(run(root).status, 1);
   assert.equal(run(project({ 'review.config.json': { name: 'ok' }, 'app.json': app({}) })).status, 0);
 });
+
+const pin = (repo, sha) => `https://codeload.github.com/o/${repo}/tar.gz/${sha}`;
+const SHA = 'a'.repeat(40);
+
+test('kits: labels must agree with pins, offline; advisory', () => {
+  const ok = project({ 'package.json': { name: 'x', dependencies: { 'k-a': pin('k-a', SHA) }, kitVersions: { 'k-a': 'v1.0.0' } } });
+  assert.equal(found(ok, {}, 'kits').length, 0);
+  const none = found(project({ 'package.json': { name: 'x', dependencies: { 'k-a': pin('k-a', SHA) } } }), {}, 'kits');
+  assert.match(none[0].what, /k-a is pinned to commit aaaaaaa/);
+  assert.equal(none[0].gate, false);
+  const stale = found(project({ 'package.json': { name: 'x', dependencies: { 'k-a': pin('k-a', SHA) }, kitVersions: { 'k-a': 'v1.0.0', 'k-b': 'v2.0.0' } } }), {}, 'kits');
+  assert.match(stale[0].what, /lists k-b/);
+  assert.equal(found(project({ 'package.json': { name: 'x', dependencies: { left: '1.0.0' } } }), {}, 'kits').length, 0, 'normal dependencies are not kits');
+});
+
+test('kits online: tag mismatch, missing tag, newer tag and unreachable remote', () => {
+  const dir = project({});
+  const git = (c) => execSync(c, { cwd: dir, stdio: 'pipe' });
+  git('git init -q -b main && git config user.email a@b.c && git config user.name t');
+  git('git commit -q --allow-empty -m one && git tag v1.0.0');
+  const first = String(git('git rev-parse HEAD')).trim();
+  git('git commit -q --allow-empty -m two && git tag v1.1.0');
+  const remote = { kitsOnline: true, kitsRemote: dir };
+  const mk = (sha, label) => project({ 'package.json': { name: 'x', dependencies: { 'k-a': pin('k-a', sha) }, kitVersions: { 'k-a': label } } });
+  const whats = (root, cfg = remote) => found(root, cfg, 'kits').map((f) => f.what);
+  assert.match(whats(mk(first, 'v1.0.0')).join(), /v1\.1\.0 exists; the app is on v1\.0\.0/);
+  assert.match(whats(mk(first, 'v1.1.0')).join(), /not the commit of that tag/);
+  assert.match(whats(mk(first, 'v9.9.9')).join(), /does not exist on the remote/);
+  const latest = String(git('git rev-parse HEAD')).trim();
+  assert.deepEqual(whats(mk(latest, 'v1.1.0')), []);
+  assert.match(whats(mk(first, 'v1.0.0'), { kitsOnline: true, kitsRemote: '/nonexistent/path' }).join(), /Could not reach/);
+});
+
+test('kits online: no label adds no tag rows, and an annotated tag is compared by the commit it points to', () => {
+  const dir = project({});
+  const git = (c) => String(execSync(c, { cwd: dir, stdio: 'pipe' })).trim();
+  git('git init -q -b main && git config user.email a@b.c && git config user.name t');
+  git('git commit -q --allow-empty -m one && git tag -a v1.0.0 -m release');
+  const sha = git('git rev-parse HEAD');
+  const cfg = { kitsOnline: true, kitsRemote: dir };
+  const labelled = project({ 'package.json': { name: 'x', dependencies: { 'k-a': pin('k-a', sha) }, kitVersions: { 'k-a': 'v1.0.0' } } });
+  assert.deepEqual(found(labelled, cfg, 'kits'), []);
+  const bare = found(project({ 'package.json': { name: 'x', dependencies: { 'k-a': pin('k-a', sha) } } }), cfg, 'kits');
+  assert.equal(bare.length, 1, 'only the missing label is reported');
+});

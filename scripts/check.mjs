@@ -77,8 +77,17 @@ for (const base of secretCfg.paths) {
 console.log(`${secretHits ? 'FAIL' : 'PASS'}  secrets scan${secretHits ? ` (${secretHits})` : ''}`);
 
 // 4. The script-based areas: structure, release, tests, agents (each when the config has its block)
-for (const area of AREAS.filter((a) => config[a.key])) {
+for (const area of AREAS.filter((a) => config[a.key] && !a.slow)) {
   printSection(area.title, area.checks, guard(() => area.run(config, root)), fail, `Review items are not failures: run scripts/${area.script} --report to get the table for the owner.`);
+}
+
+// Areas with no block in the config were not checked. Say so, so "passed" is not read as "everything was looked at".
+const applicable = AREAS.filter((a) => !a.slow && (a.applies?.(root) ?? true));
+const notRun = applicable.filter((a) => !config[a.key]);
+if (notRun.length) {
+  console.log('\n== Not run ==');
+  console.log(`${notRun.map((a) => a.key).join(', ')}: no block in review.config.json, so these checks did not run.`);
+  console.log('See which blocks to add, and add them: node <kit>/scripts/upgrade.mjs [--write]');
 }
 
 // Report
@@ -87,4 +96,4 @@ if (results.length) {
   for (const r of results) console.log(`[${r.section}] ${r.line}`);
   process.exit(1);
 }
-console.log('\nAll automated checks passed.');
+console.log(notRun.length ? `\nAll automated checks that ran passed. ${notRun.length} of ${applicable.length} areas did not run (see above).` : '\nAll automated checks passed.');

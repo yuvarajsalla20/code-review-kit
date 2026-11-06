@@ -1,4 +1,4 @@
-import { couldNotVerify, decisionSections, header, summaryTable } from '../lib/table.mjs';
+import { acceptedSection, couldNotVerify, decisionSections, header, summaryTable } from '../lib/table.mjs';
 
 export const TITLES = {
   frontmatter: 'Front matter',
@@ -15,6 +15,7 @@ export const toMarkdown = (project, kitVersion, date, result) =>
     ...header('Agent review', project, kitVersion, date, `   Agents: ${result.agents}   Skills read: ${result.skills}`),
     ...summaryTable(TITLES, result),
     ...decisionSections(TITLES, result.findings),
+    ...acceptedSection(result),
     ...couldNotVerify([
       'The scripts read structure and wording. They cannot tell whether an agent finds real problems: that needs the reviewer agent and a trial on a project with planted defects.',
       'Overlap in scope (two agents owning the same finding) and vague rules need a reader, not a script.',

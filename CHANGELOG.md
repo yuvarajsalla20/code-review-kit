@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.11.0 - 2026-11-06
+- `review.accepted.json`: accept a finding once, with a reason and date. Accepted rows move to their own table and stop counting; entries that match nothing are reported as stale.
+- `check.mjs` lists the areas that did not run, and `upgrade.mjs` previews (and with `--write` adds) the missing config blocks. Agents area is skipped when the project has no `agents/` folder.
+- New advisory `kits` check in `release`: `kitVersions` against the commit-pinned kits, and optionally against the remote tags.
+- The summary states who verified the rows (`verifiedBy`: agents, inline or none) instead of implying agents ran.
+- New advisory mutation check (`mutate.mjs`, area `mutation`): works on a temporary copy, never edits the project, never gates, not in the default run.
+- Speed check false positives fixed: listener-driven `useNativeDriver: false`, bounded lists, returned `onSnapshot`.
+- `checklists/ux.md`: required steps, sideways scroll hints, consistent page style and risky-action drawing.
+- New tests (94 in all); hand mutation checks of the new code, with the survivors closed or shown equivalent.
+
 ## 1.10.0 - 2026-11-04
 - Speed review is part of a normal review now. `code-review` and `review-summary` start `performance-reviewer` by default; say "skip speed" to leave it out for a small change.
 - `performance-reviewer` has a library mode. Set `design.kind` to `"library"` (default `"app"`) and it asks what a project pays per render, per install and per mount instead of launch path and users. `checklists/performance.md` has a matching Library section.

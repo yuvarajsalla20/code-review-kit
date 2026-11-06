@@ -20,10 +20,14 @@ function* matches(texts, regex, keep = () => true) {
   }
 }
 
-/** True when the animation call has no `useNativeDriver`, or sets it to a literal false. Any other value (a variable, `Platform.OS !== 'web'`) is the author's choice. */
+/** The JavaScript has to read the value as it changes: the native driver cannot do that, so `useNativeDriver: false` is right. Looks a few lines up from the call for `.addListener(`. */
+const readInJs = (text, index) => /\.addListener\s*\(/.test(text.slice(Math.max(0, index - 400), index));
+
+/** True when the animation call has no `useNativeDriver`, or sets it to a literal false. Any other value (a variable, `Platform.OS !== 'web'`) is the author's choice, and so is a value the code listens to. */
 const missesNativeDriver = (text, m) => {
   const value = /useNativeDriver\s*:\s*([^,}\n]+)/.exec(callText(text, m.index + m[0].length - 1));
-  return !value || /^false\b/.test(value[1].trim());
+  if (value && !/^false\b/.test(value[1].trim())) return false;
+  return !(value && readInJs(text, m.index));
 };
 
 /** Animations that run on the JavaScript thread, so a busy app makes them stutter. */
@@ -48,14 +52,19 @@ const tagEnd = (text, from) => {
   return -1;
 };
 
-/** True when the ScrollView opened at `from` has children and one of them is drawn with .map. A self-closing one has none. */
+/** Lists that cannot grow: a CONSTANT_NAME or a written-out array drawn with .map. */
+const BOUNDED = /\b[A-Z][A-Z0-9_]{2,}\s*\.map\s*\(|\[[^\][]{0,200}\]\s*\.map\s*\(/;
+
+/** True when the ScrollView opened at `from` has children and one of them is drawn with .map from a list that can grow. A self-closing one has none. */
 const mapsInScrollView = (text, from) => {
   const open = tagEnd(text, from);
   if (open === -1 || text[open - 1] === '/') return false;
   const close = text.indexOf('</ScrollView>', open);
   const next = text.indexOf('<ScrollView', open);
   const end = next !== -1 && (close === -1 || next < close) ? next : close;
-  return end !== -1 && /\.map\s*\(/.test(text.slice(open, end));
+  if (end === -1) return false;
+  const inside = text.slice(open, end);
+  return /\.map\s*\(/.test(inside) && !BOUNDED.test(inside);
 };
 
 /** Lists drawn with .map inside a ScrollView: every item is drawn at once. */
@@ -79,14 +88,20 @@ const PAIRS = [
   { start: /\.(?:addEventListener|addListener)\s*\(/g, stop: /\.(?:removeEventListener|removeListener|remove|off)\s*\(/, needs: LIFECYCLE, what: 'A listener is added in code that mounts and unmounts, and nothing in this file removes it', fix: 'Keep what it returns and call .remove() in the effect cleanup, or call removeEventListener.' },
 ];
 /** Live listeners whose stop function is thrown away, so they can never be stopped. */
-const DISCARDED = /(?:^|[;{}])\s*(?:onSnapshot|onAuthStateChanged|onIdTokenChanged)\s*\(/gm;
+const DISCARDED = /\b(?:onSnapshot|onAuthStateChanged|onIdTokenChanged)\s*\(/g;
+
+/** True when the call at `index` starts a statement, so its result is thrown away. After `=>`, `return`, `=`, `(` or `,` the result is handed on (a function that returns the stop function is a subscription API, not a leak). */
+const startsStatement = (text, index) => {
+  const before = text.slice(0, index).trimEnd();
+  return before === '' || /[;{}]$/.test(before);
+};
 
 /** The first hit in each file. */
 const firstPerFile = (hits) => [...new Map([...hits].reverse().map((h) => [h.file, h]))].map(([, h]) => h);
 
 export const findCleanupGaps = (texts) => [
   ...PAIRS.flatMap(({ start, stop, needs, what, fix }) => firstPerFile(matches(texts, start, (text) => (!needs || needs.test(text)) && !stop.test(text))).map(({ file, line }) => row({ file, line, what, fix }))),
-  ...[...matches(texts, DISCARDED)].map(({ file, line }) =>
+  ...[...matches(texts, DISCARDED, (text, m) => startsStatement(text, m.index))].map(({ file, line }) =>
     row({ file, line, what: 'A live listener is started and its stop function is not kept, so it keeps running (and reading) after the screen is gone', fix: 'Keep the returned function and call it in the effect cleanup: const stop = onSnapshot(...); return stop;' }),
   ),
 ];

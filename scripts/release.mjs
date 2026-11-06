@@ -3,7 +3,7 @@
 //   node path/to/review-kit/scripts/release.mjs [review.config.json] [--report out.md] [--json]
 // Exit code 1 when a gated check finds something. Run from the project root.
 import { runCli } from './lib/cli.mjs';
-import { runRelease } from './release/index.mjs';
+import { areaRun } from './areas.mjs';
 import { toMarkdown } from './release/report.mjs';
 
-runCli({ run: runRelease, toMarkdown });
+runCli({ run: areaRun('release'), toMarkdown });
