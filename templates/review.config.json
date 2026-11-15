@@ -1,6 +1,7 @@
 {
   "name": "my-app",
   "timezone": "America/Chicago",
+  "email": { "enabled": true, "addressesFile": "review.email.json", "attach": ["summary.html"], "send": "always" },
   "stack": ["react-native-expo"],
   "checklists": ["general", "security", "deep-links", "widgets"],
   "stores": [],

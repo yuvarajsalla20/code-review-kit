@@ -21,6 +21,7 @@ Findings first, fixes only after the owner chooses. Never change code during the
 6b. Before showing it, verify each Blocker and High yourself by reading the cited code; drop anything you cannot confirm (add its key to `drop`).
 7. **Show the owner** the summary and ask for a mark on every row: fix, later, or "accept: <reason>". Run `node <kit>/scripts/decide.mjs --report summary.md --previous summary.json` on the marked file: it lists the fix rows and, with `--write`, adds the accepted script rows to `review.accepted.json`. Fix only the fix rows, then re-run steps 2 to 6 with `--previous`, so the owner sees what is fixed and what is new.
 8. **Manual test script.** Produce a short numbered list of on-device steps from `templates/manual-test.md`, adjusted to the app's screens. For an app, `node <kit>/scripts/e2e.mjs --out <folder>` writes starter Maestro flows from the config's `e2e` block, and reports how many screens have test IDs.
+9. **Email the report (when the config has an `email` block).** Follow "Emailing the report" in `rules/review-rules.md`: `node <kit>/scripts/email.mjs --summary summary.json --out review-out/email.json` (add `--to all` or `--to <addresses>` only when the owner asked), then send it with the mail connector, attaching `summary.html`. Report who it went to.
 
 ## Notes
 - Be honest about what cannot be checked (real devices, live backend). Never promise zero bugs.
