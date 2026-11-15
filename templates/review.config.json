@@ -66,6 +66,7 @@
     "owner": "users/{uid}",
     "items": "users/{uid}/items",
     "ownerRequired": true,
+    "eraseOrder": "ownerFirst",
     "profile": { "email": null },
     "item": { "name": "Example", "updatedAt": "" },
     "idField": "id",

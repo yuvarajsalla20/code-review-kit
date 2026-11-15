@@ -18,6 +18,20 @@ const PRIVATE = /privacySensitive|redacted|privacy-sensitive/;
 /** Where a widget timeline is planned. */
 const TIMELINE = /\b(updateTimeline|reloadTimelines?|setTimeline|timeline)\s*[(:=]/i;
 const CAP = /\b(MAX_[A-Z_]*ENTRIES|MAX_ENTRIES|maxEntries)\b\s*=\s*(\d+)/;
+/** A plan that ends on an entry asking to open the app: once it shows, nothing out of date is on screen. */
+const REFRESH_END = /\b(?:refresh|stale|openToRefresh)\s*:\s*true\b/;
+/** A call that hands iOS a single entry (which never goes out of date) or a plan built by a function (checked where it is built). */
+const HANDS_ON = /(?:updateTimeline|setTimeline)\s*\(\s*(?:\[\s*\{[^\]]*\}\s*\]|[A-Za-z_$][\w$.]*\s*\()/y;
+
+/** The first place a timeline is planned in this text, skipping calls that only hand one over. */
+const firstPlan = (text) => {
+  const all = new RegExp(TIMELINE.source, 'gi');
+  for (let m = all.exec(text); m; m = all.exec(text)) {
+    HANDS_ON.lastIndex = m.index;
+    if (!HANDS_ON.test(text)) return m;
+  }
+  return null;
+};
 
 /** True when the project uses one of the widget packages (or has none to check). */
 export const usesWidgets = (root) => {
@@ -45,8 +59,8 @@ export function runWidgets(config, root) {
       lockscreen.push({ where: `${file}:${line}`, what: 'A widget or Live Activity draws text with no privacySensitive or redacted marker, so it shows in full on a locked phone, whatever the person set for notification previews', fix: 'Mark personal text (reminder names, amounts, people) privacySensitive so iOS hides it while locked. Consider a setting to hide names on the Lock Screen.', effort: 'small', places: [{ file, from: line }] });
     }
     const cap = CAP.exec(text);
-    const plan = TIMELINE.exec(text) ?? (cap && /timeline/i.test(text) ? cap : null);
-    if (plan && /date|Date|entries|at:/.test(text)) {
+    const plan = firstPlan(text) ?? (cap && /timeline/i.test(text) ? cap : null);
+    if (plan && /date|Date|entries|at:/.test(text) && !REFRESH_END.test(text)) {
       const line = at((cap ?? plan).index);
       timeline.push({ where: `${file}:${line}`, what: `A widget timeline is planned here${cap ? ` with at most ${cap[2]} entries` : ''}. Once the last entry passes, iOS keeps showing it and does not wake the app; repeating items must show their next time, not the last one`, fix: 'Plan a fixed span (for example 7 days, capped around 100 entries), end on a neutral "Open the app to refresh" entry, and test with a daily repeating item.', effort: 'medium', places: [{ file, from: line }] });
     }
