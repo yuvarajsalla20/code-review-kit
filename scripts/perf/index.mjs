@@ -8,6 +8,8 @@ import { findHeavy, findLargeAssets } from './weight.mjs';
 
 export const CHECKS = ['assets', 'heavy', 'animation', 'cleanup', 'lists'];
 const DEFAULTS = {
+  // Website files (a marketing site served from public/) are not in the app download, so their size is not the app's weight.
+  webRoots: ['public'],
   roots: ['src', 'App.tsx'],
   assetRoots: ['assets', 'public', 'src'],
   ignore: ['tests'],

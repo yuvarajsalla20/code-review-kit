@@ -8,6 +8,8 @@ import { runPerf, CHECKS as PERF_CHECKS } from './perf/index.mjs';
 import { runRelease, CHECKS as RELEASE_CHECKS } from './release/index.mjs';
 import { runStructure, CHECKS as STRUCTURE_CHECKS } from './structure/index.mjs';
 import { runTestMap, CHECKS as TEST_CHECKS } from './testmap/index.mjs';
+import { runLinks, CHECKS as LINK_CHECKS } from './links/index.mjs';
+import { runWidgets, CHECKS as WIDGET_CHECKS, usesWidgets } from './widgets/index.mjs';
 
 /** `key` is also the name of the area's block in review.config.json. */
 const RAW = [
@@ -16,6 +18,8 @@ const RAW = [
   { key: 'tests', title: 'Tests', run: runTestMap, checks: TEST_CHECKS, script: 'testmap.mjs' },
   { key: 'agents', title: 'Agents', run: runAgents, checks: AGENT_CHECKS, script: 'agents.mjs', applies: (root) => existsSync(join(root, 'agents')) },
   { key: 'speed', title: 'Speed and cost', run: runPerf, checks: PERF_CHECKS, script: 'perf.mjs' },
+  { key: 'links', title: 'Links and parsing', run: runLinks, checks: LINK_CHECKS, script: 'links.mjs', applies: (root) => existsSync(join(root, 'src')) || existsSync(join(root, 'App.tsx')) },
+  { key: 'widgets', title: 'Widgets and Lock Screen', run: runWidgets, checks: WIDGET_CHECKS, script: 'widgets.mjs', applies: usesWidgets },
   // Slow: never part of the default run; only `--areas mutation` or mutate.mjs start it.
   { key: 'mutation', title: 'Mutation (advisory)', run: runMutation, checks: MUTATION_CHECKS, script: 'mutate.mjs', slow: true },
 ];
@@ -28,3 +32,15 @@ export const AREAS = RAW.map((a) => ({ ...a, run: withAccepted(a.key, a.run, KNO
 
 /** The wrapped run function of one area, for the stand-alone scripts. */
 export const areaRun = (key) => AREAS.find((a) => a.key === key).run;
+
+/**
+ * Which areas apply to this project, which have no config block (not run), and which the owner skipped on purpose with a reason
+ * (`skipAreas`). A skip without a reason counts as not run: "skipped" must say why.
+ */
+export function coverage(config, root) {
+  const applicable = AREAS.filter((a) => !a.slow && (a.applies?.(root) ?? true));
+  const reasons = config.skipAreas ?? {};
+  const missing = applicable.filter((a) => !config[a.key]);
+  const skipped = missing.filter((a) => typeof reasons[a.key] === 'string' && reasons[a.key].trim());
+  return { applicable, skipped, notRun: missing.filter((a) => !skipped.includes(a)) };
+}

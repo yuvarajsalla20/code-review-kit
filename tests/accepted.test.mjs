@@ -103,10 +103,12 @@ test('the stand-alone report and the summary both list accepted rows and stale e
 
 test('check.mjs lists the areas that did not run, and says so in its last line', () => {
   const some = node('check.mjs', project({ 'src/a.ts': 'export const a = 1;', 'review.config.json': { tests: { paths: ['tests'], risky: [] } } }));
-  assert.match(some.stdout, /== Not run ==\nstructure, release, speed: no block/);
-  assert.match(some.stdout, /All automated checks that ran passed\. 3 of 4 areas did not run/);
-  const all = node('check.mjs', project({ 'src/a.ts': 'export const a = 1;', 'review.config.json': { structure: {}, release: {}, tests: { paths: [] }, speed: {} } }));
+  assert.match(some.stdout, /== Not run ==\nstructure, release, speed, links: no block/);
+  assert.match(some.stdout, /INCOMPLETE: the checks that ran passed, but 4 of 5 areas did not run/);
+  assert.equal(some.status, 3, 'a run that skipped areas is not a pass');
+  const all = node('check.mjs', project({ 'src/a.ts': 'export const a = 1;', 'review.config.json': { structure: {}, release: {}, tests: { paths: [] }, speed: {}, links: {} } }));
   assert.doesNotMatch(all.stdout, /Not run/);
+  assert.equal(all.status, 0);
 });
 
 test('the agents area counts as not run only in a project that has an agents folder', () => {

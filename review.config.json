@@ -1,30 +1,112 @@
 {
   "name": "code-review-kit",
   "timezone": "America/Chicago",
-  "stack": ["node"],
+  "stack": [
+    "node"
+  ],
   "riskyAreas": [
     "scripts/lib/: every script depends on it",
-    "scripts/structure/, release/, testmap/, agents/, perf/: a wrong finding sends the owner the wrong way",
+    "scripts/structure/, release/, testmap/, agents/, perf/, links/, widgets/, load/, e2e/: a wrong finding sends the owner the wrong way",
     "scripts/summary/: the verdict and the page"
   ],
   "design": {
     "goal": "A reusable, dependency-free review kit: scripts count, independent agents verify, the owner decides. Findings first, fixes only after the owner chooses.",
-    "platforms": ["node 18+"],
+    "platforms": [
+      "node 18+"
+    ],
     "team": "solo developer working with Claude",
-    "mustNeverHappen": ["a reviewer that edits the project", "a wrong finding presented as verified", "a gated check that silently passes"],
-    "next": ["add a new check to a script", "add a new reviewer agent", "add a new report format"]
+    "mustNeverHappen": [
+      "a reviewer that edits the project",
+      "a wrong finding presented as verified",
+      "a gated check that silently passes"
+    ],
+    "next": [
+      "add a new check to a script",
+      "add a new reviewer agent",
+      "add a new report format"
+    ]
   },
   "structure": {
-    "roots": ["scripts"],
-    "layers": [
-      { "name": "lib", "paths": ["scripts/lib"], "mayImport": [] },
-      { "name": "checks", "paths": ["scripts/structure", "scripts/release", "scripts/testmap", "scripts/agents", "scripts/perf"], "mayImport": ["lib"] },
-      { "name": "summary", "paths": ["scripts/summary"], "mayImport": ["lib", "checks"] }
+    "roots": [
+      "scripts"
     ],
-    "gate": ["cycles", "layers", "restricted"]
+    "layers": [
+      {
+        "name": "lib",
+        "paths": [
+          "scripts/lib"
+        ],
+        "mayImport": []
+      },
+      {
+        "name": "checks",
+        "paths": [
+          "scripts/structure",
+          "scripts/release",
+          "scripts/testmap",
+          "scripts/agents",
+          "scripts/perf",
+          "scripts/links",
+          "scripts/widgets",
+          "scripts/load",
+          "scripts/e2e"
+        ],
+        "mayImport": [
+          "lib"
+        ]
+      },
+      {
+        "name": "summary",
+        "paths": [
+          "scripts/summary"
+        ],
+        "mayImport": [
+          "lib",
+          "checks"
+        ]
+      }
+    ],
+    "gate": [
+      "cycles",
+      "layers",
+      "restricted"
+    ]
   },
-  "tests": { "paths": ["tests"], "risky": ["scripts"], "gate": [] },
-  "agents": { "paths": ["agents"], "skills": ["skills"] },
-  "commands": [{ "name": "tests", "run": "node --test tests/*.test.mjs" }],
-  "secrets": { "paths": ["."], "skip": ["node_modules", ".git", "tests"] }
+  "tests": {
+    "paths": [
+      "tests"
+    ],
+    "risky": [
+      "scripts"
+    ],
+    "gate": []
+  },
+  "agents": {
+    "paths": [
+      "agents"
+    ],
+    "skills": [
+      "skills"
+    ]
+  },
+  "commands": [
+    {
+      "name": "tests",
+      "run": "node --test tests/*.test.mjs"
+    }
+  ],
+  "secrets": {
+    "paths": [
+      "."
+    ],
+    "skip": [
+      "node_modules",
+      ".git",
+      "tests"
+    ]
+  },
+  "skipAreas": {
+    "release": "a command-line kit with no store build",
+    "speed": "no app screens or bundled media; the scripts run once per review"
+  }
 }

@@ -2,7 +2,7 @@
   "name": "my-app",
   "timezone": "America/Chicago",
   "stack": ["react-native-expo"],
-  "checklists": ["general", "security"],
+  "checklists": ["general", "security", "deep-links", "widgets"],
   "stores": [],
   "riskyAreas": [
     "delete account",
@@ -51,10 +51,38 @@
     "appConfig": "app.json",
     "privacyFile": "public/privacy.html",
     "lockfileCommand": "npm ci --dry-run --ignore-scripts",
-    "gate": ["lockfile", "appConfig", "permissions", "tracked"]
+    "keyPrefixes": { "EXPO_PUBLIC_RC_IOS_KEY": "appl_" },
+    "productionProfiles": ["production"],
+    "gate": ["lockfile", "appConfig", "permissions", "tracked", "storeKeys"]
   },
   "tests": { "paths": ["tests"], "risky": ["src/data", "src/notify"], "gate": [] },
-  "speed": { "roots": ["src", "App.tsx"], "assetRoots": ["assets", "public"], "maxAssetKb": 300, "gate": [] },
+  "speed": { "roots": ["src", "App.tsx"], "assetRoots": ["assets"], "webRoots": ["public"], "maxAssetKb": 300, "gate": [] },
+  "links": { "roots": ["src", "App.tsx"], "ignore": ["tests"], "gate": [] },
+  "widgets": { "roots": ["src", "App.tsx"], "ignore": ["tests"], "gate": [] },
+  "skipAreas": { "agents": "Example: say why an area does not apply. A skip with no reason counts as not run." },
+  "firestoreLoad": {
+    "rules": "firestore.rules",
+    "projectId": "demo-my-app",
+    "owner": "users/{uid}",
+    "items": "users/{uid}/items",
+    "ownerRequired": true,
+    "profile": { "email": null },
+    "item": { "name": "Example", "updatedAt": "" },
+    "idField": "id",
+    "newerField": "updatedAt",
+    "invalid": [{ "label": "a name over 120 characters", "patch": { "name": "repeat:x:121" } }],
+    "users": 300,
+    "perUser": 20,
+    "heavy": 2000
+  },
+  "e2e": {
+    "appId": "com.example.app",
+    "firstScreen": "Sign In",
+    "signIn": { "button": "Sign In", "email": "Email", "password": "Password", "done": "Home" },
+    "add": { "open": "Add", "field": "Name", "save": "Save" },
+    "links": [{ "url": "myapp://item/123", "expect": "Home" }],
+    "back": "Close"
+  },
   "commands": [
     { "name": "types", "run": "npx tsc --noEmit" }
   ],

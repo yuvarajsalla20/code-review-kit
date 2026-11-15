@@ -1,0 +1,4 @@
+[
+  { "area": "tests", "check": "untested", "file": "scripts/load/runner.mjs", "reason": "Runs only inside the Firestore emulator (Java + firebase-tools); proven by a real run on HringNring on 2026-11-15, its plan and output parsing are tested in v112.test.mjs", "date": "2026-11-15" },
+  { "area": "tests", "check": "untested", "file": "scripts/decide.mjs", "reason": "Run as a program by v112.test.mjs ('decide.mjs previews, then --write'); the test map cannot tell it from scripts/summary/decide.mjs by file name", "date": "2026-11-15" }
+]
