@@ -4,9 +4,15 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { assemble } from '../lib/findings.mjs';
+import { SOURCE, listFiles, readText } from '../lib/files.mjs';
+import { lineFinder, stripComments } from '../lib/source.mjs';
 
-export const CHECKS = ['lockfile', 'appConfig', 'permissions', 'tracked', 'privacy', 'kits'];
-const DEFAULTS = { appConfig: 'app.json', privacyFile: null, kitsOnline: false, kitsRemote: 'https://github.com/{owner}/{repo}.git', lockfileCommand: 'npm ci --dry-run --ignore-scripts', gate: ['lockfile', 'appConfig', 'permissions', 'tracked'] };
+export const CHECKS = ['lockfile', 'appConfig', 'permissions', 'permissionUse', 'tracked', 'privacy', 'kits', 'kitTests', 'storeKeys'];
+const DEFAULTS = {
+  appConfig: 'app.json', privacyFile: null, kitsOnline: false, kitsRemote: 'https://github.com/{owner}/{repo}.git', lockfileCommand: 'npm ci --dry-run --ignore-scripts',
+  sourceRoots: ['src', 'App.tsx', 'app'], keyPrefixes: {}, productionProfiles: ['production'],
+  gate: ['lockfile', 'appConfig', 'permissions', 'tracked', 'storeKeys'],
+};
 
 /** Packages that need a written reason before the store accepts the app: package, the plugin options and plist keys that carry it. */
 const NEEDS_REASON = {
@@ -16,6 +22,17 @@ const NEEDS_REASON = {
   'expo-contacts': ['contactsPermission', 'NSContactsUsageDescription'],
   'expo-av': ['microphonePermission', 'NSMicrophoneUsageDescription'],
 };
+/** The calls that use each permission, to set beside its reason text. */
+const PERMISSION_CALLS = {
+  'expo-location': /\b(getCurrentPositionAsync|getLastKnownPositionAsync|watchPositionAsync|reverseGeocodeAsync|geocodeAsync|startLocationUpdatesAsync)\s*\(/,
+  'expo-image-picker': /\b(launchImageLibraryAsync|launchCameraAsync)\s*\(/,
+  'expo-camera': /<(CameraView|Camera)\b|\btakePictureAsync\s*\(/,
+  'expo-contacts': /\b(getContactsAsync|presentContactPickerAsync)\s*\(/,
+  'expo-av': /\bRecording\b|\bcreateAsync\s*\(/,
+};
+/** Words in a reason text that promise a narrow use. */
+const NARROW = /\b(only|just|never|solely)\b/i;
+
 /** What a privacy policy must mention when the app uses this package. */
 const MUST_MENTION = {
   '@sentry/react-native': [/sentry/i, 'crash reports (Sentry)'],
@@ -55,18 +72,42 @@ const appConfig = (root, s) => {
   return missing.length ? [{ where: s.appConfig, what: `Missing: ${missing.join(', ')}`, fix: 'Fill them in; the store needs each one.', effort: 'small' }] : [];
 };
 
-const permissions = (root, s) => {
+/** The reason text the app gives for each sensitive package it depends on: [[package, option, plist key, text]]. */
+const reasons = (root, s) => {
   const app = readJson(root, s.appConfig)?.expo;
   const deps = readJson(root, 'package.json')?.dependencies ?? {};
   if (!app) return [];
   const plist = app.ios?.infoPlist ?? {};
   const options = (app.plugins ?? []).filter(Array.isArray).map(([name, opts]) => [name, opts ?? {}]);
+  return Object.entries(NEEDS_REASON).filter(([pkg]) => deps[pkg]).map(([pkg, [option, key]]) => [pkg, option, key, plist[key] ?? options.find(([n]) => n === pkg)?.[1][option]]);
+};
+
+const permissions = (root, s) => {
   const out = [];
-  for (const [pkg, [option, key]] of Object.entries(NEEDS_REASON)) {
-    if (!deps[pkg]) continue;
-    const given = plist[key] ?? options.find(([n]) => n === pkg)?.[1][option];
+  for (const [pkg, option, key, given] of reasons(root, s)) {
     if (typeof given !== 'string' || !given.trim()) out.push({ where: s.appConfig, what: `${pkg} is used but no reason text is set (${option} / ${key})`, fix: `Write one plain sentence saying why the app needs it, as ${option} on the ${pkg} plugin.`, effort: 'small' });
     else if (PLACEHOLDER.test(given)) out.push({ where: s.appConfig, what: `The reason text for ${pkg} is a default or placeholder: "${given.slice(0, 50)}"`, fix: 'Replace it with a specific sentence about this app. Generic text is a common rejection reason.', effort: 'small' });
+  }
+  return out;
+};
+
+/**
+ * The reason text against the code: when a text promises a narrow use ("only when you tap Current") but the matching
+ * calls sit in more than one file, the prompt may understate what the app does (App Review guideline 5.1.1). Review, not gate.
+ */
+const permissionUse = (root, s) => {
+  const files = listFiles(root, s.sourceRoots, { match: SOURCE });
+  const out = [];
+  for (const [pkg, option, , given] of reasons(root, s)) {
+    if (typeof given !== 'string' || !PERMISSION_CALLS[pkg] || !NARROW.test(given)) continue;
+    const calls = new RegExp(PERMISSION_CALLS[pkg].source, 'g');
+    const sites = files.flatMap((file) => {
+      const text = stripComments(readText(root, file));
+      const at = lineFinder(text);
+      return [...text.matchAll(calls)].map((m) => ({ file, from: at(m.index), call: m[1] ?? m[0].trim() }));
+    });
+    if (sites.length < 2) continue;
+    out.push({ where: s.appConfig, what: `The ${pkg} reason text promises a narrow use ("${given.slice(0, 70)}"), but the code uses it in ${sites.length} places: ${sites.map((x) => `${x.call} at ${x.file}:${x.from}`).join(', ')}`, fix: `Open each place and check the text covers it. If not, reword ${option} to name each use, and match the App Privacy answers.`, effort: 'small', places: sites.map(({ file, from }) => ({ file, from })) });
   }
   return out;
 };
@@ -84,7 +125,13 @@ const privacy = (root, s) => {
   return Object.entries(MUST_MENTION).filter(([pkg, [re]]) => deps[pkg] && !re.test(text)).map(([, [, topic]]) => ({ where: s.privacyFile, what: `The app uses ${topic}, but the privacy policy does not mention it`, fix: `Add a sentence on what is collected through ${topic} and why. Update the App Store privacy answers to match.`, effort: 'small' }));
 };
 
-const PIN = /^https:\/\/codeload\.github\.com\/([^/]+)\/([^/]+)\/tar\.gz\/([0-9a-f]{7,40})$/;
+/** A dependency pinned to one commit: a codeload tarball, a git URL with `#<commit>`, or `github:owner/repo#<commit>`. */
+const PINS = [
+  /^https:\/\/codeload\.github\.com\/([^/]+)\/([^/]+)\/tar\.gz\/([0-9a-f]{7,40})$/,
+  /^git\+(?:https|ssh):\/\/(?:git@)?github\.com[/:]([^/]+)\/([^/#]+?)(?:\.git)?#([0-9a-f]{7,40})$/,
+  /^(?:github:)?([\w.-]+)\/([\w.-]+)#([0-9a-f]{7,40})$/,
+];
+const PIN = { exec: (url) => PINS.map((re) => re.exec(url)).find(Boolean) ?? null };
 const semver = (tag) => (/^v?(\d+)\.(\d+)\.(\d+)$/.exec(tag) ?? []).slice(1).map(Number);
 const newer = (a, b) => { const x = semver(a); const y = semver(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i]; return false; };
 
@@ -124,9 +171,58 @@ const kits = (root, s) => {
   return out;
 };
 
+/** Packages whose version a kit should test against: the ones the app actually ships. */
+const SHARED_RUNTIME = ['react', 'react-native', 'expo'];
+const majorMinor = (v) => (/(\d+)\.(\d+)/.exec(String(v)) ?? []).slice(1, 3).join('.');
+
+/** Each installed kit's own test setup against the app: a kit tested on React 18 can pass its tests and still break on the React 19 the app ships. */
+const kitTests = (root) => {
+  const pkg = readJson(root, 'package.json');
+  if (!pkg) return [];
+  const app = { ...pkg.devDependencies, ...pkg.dependencies };
+  const out = [];
+  for (const [name, url] of Object.entries({ ...pkg.dependencies, ...pkg.devDependencies })) {
+    if (!PIN.exec(String(url))) continue;
+    const kit = readJson(root, `node_modules/${name}/package.json`);
+    if (!kit) continue;
+    const wrong = SHARED_RUNTIME.filter((dep) => kit.devDependencies?.[dep] && app[dep] && majorMinor(kit.devDependencies[dep]) !== majorMinor(app[dep]));
+    if (wrong.length) out.push({ where: `node_modules/${name}/package.json`, what: `${name} runs its tests on ${wrong.map((d) => `${d} ${kit.devDependencies[d]}`).join(', ')}, but the app ships ${wrong.map((d) => `${d} ${app[d]}`).join(', ')}`, fix: `In the ${name} repository, set those devDependencies to the app's versions and run its tests again.`, effort: 'small' });
+  }
+  return out;
+};
+
+/**
+ * Keys that must have a given prefix in a store build, e.g. `{ "EXPO_PUBLIC_RC_IOS_KEY": "appl_" }` so a RevenueCat test key never ships.
+ * A wrong value in eas.json or a tracked .env file fails (gate). When the production value is not in the repository, a build-time guard must exist:
+ * some file under the source or scripts folders, or app.config, that names both the key and its prefix.
+ */
+const storeKeys = (root, s) => {
+  const entries = Object.entries(s.keyPrefixes ?? {});
+  if (!entries.length) return [];
+  const eas = readJson(root, 'eas.json')?.build ?? {};
+  const envFiles = ['.env', '.env.production', '.env.local'].filter((f) => existsSync(join(root, f)));
+  const guardFiles = listFiles(root, [...s.sourceRoots, 'scripts', 'app.config.js', 'app.config.ts'], { match: SOURCE });
+  const out = [];
+  for (const [key, prefix] of entries) {
+    const seen = [];
+    for (const profile of s.productionProfiles) {
+      const v = eas[profile]?.env?.[key];
+      if (v !== undefined) seen.push([`eas.json build.${profile}.env`, String(v)]);
+    }
+    for (const f of envFiles) {
+      const m = new RegExp(`^\\s*${key}\\s*=\\s*["']?([^"'\\s]*)`, 'm').exec(readText(root, f));
+      if (m) seen.push([f, m[1]]);
+    }
+    for (const [where, value] of seen) if (!value.startsWith(prefix)) out.push({ where, what: `${key} is "${value.slice(0, 6)}…" here, but a store build needs it to start with "${prefix}"`, fix: `Set the production value to the ${prefix} key. A wrong key ships fake or broken purchases to real customers.`, effort: 'small' });
+    const guarded = guardFiles.some((f) => { const t = readText(root, f); return t.includes(key) && t.includes(prefix); });
+    if (!seen.length && !guarded) out.push({ where: 'eas.json', what: `The production value of ${key} is not in the repository (it lives in the build service), and no build step checks that it starts with "${prefix}"`, fix: `Add a check to the build config, e.g. in app.config.js: \`if (process.env.EAS_BUILD_PROFILE === 'production' && !process.env.${key}?.startsWith('${prefix}')) throw new Error('${key} must start with ${prefix}')\`.`, effort: 'small' });
+  }
+  return out;
+};
+
 export function runRelease(config, root) {
   const s = { ...DEFAULTS, ...config.release };
-  const found = { lockfile: lockfile(root, s), appConfig: appConfig(root, s), permissions: permissions(root, s), tracked: tracked(root), privacy: privacy(root, s), kits: kits(root, s) };
+  const found = { lockfile: lockfile(root, s), appConfig: appConfig(root, s), permissions: permissions(root, s), permissionUse: permissionUse(root, s), tracked: tracked(root), privacy: privacy(root, s), kits: kits(root, s), kitTests: kitTests(root), storeKeys: storeKeys(root, s) };
   for (const rows of Object.values(found)) for (const f of rows) f.places ??= [{ file: f.where, from: 1 }];
   return { ...assemble(CHECKS, found, s.gate), settings: s };
 }

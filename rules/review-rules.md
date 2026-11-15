@@ -11,6 +11,12 @@ Every reviewer agent follows these. An agent's own file holds only what is speci
 - Every finding also gives its **impact**: one plain sentence on what could go wrong for the user or for future work, with no jargon. The summary shows it to the owner.
 - Say what you could not check (a real device, a live backend, the store, an installed plugin).
 
+## Hand-off file
+After the report, end with one ```json block in the shape of `templates/findings.json`, so `summary.mjs --extra` puts your findings in the owner's summary without retyping:
+- `add`: each finding of yours, with `area` (your area name), `severity`, `where`, `what`, `meaning` and `impact` in plain words, `trigger`, `fix`, `effort`, and `proof`: `code` (traced in the code), `test` (you ran something that shows it), or `device` (real in the code, but how bad it is needs a phone).
+- `drop`: script rows you opened and found not real, by their key (`area:check|where`). `override`: script rows whose level or wording you corrected.
+- `couldNot`: what you could not check. Leave out anything you did not verify, or give it `proof: "device"` and say so in `impact`.
+
 ## Severity scale
 - **Blocker**: data loss, a security hole, a crash on a main path, a store rejection, or a design that cannot meet a stated goal.
 - **High**: wrong money or dates, a feature that fails for some users, a likely failure or runaway cost within the stated scale.

@@ -8,9 +8,9 @@ import { row } from './row.mjs';
 const ASSET = /\.(png|jpe?g|gif|webp|heic|mp4|mov|m4v|mp3|wav|aac|ttf|otf)$/i;
 
 /** Files over `maxAssetKb`. Looks at every size: the shared file walker skips files over 1 MB unless told otherwise. */
-export function findLargeAssets(root, { assetRoots, ignore, maxAssetKb }) {
+export function findLargeAssets(root, { assetRoots, ignore, maxAssetKb, webRoots = [] }) {
   if (!(maxAssetKb > 0)) throw new ConfigError('speed.maxAssetKb must be a number above 0.');
-  return listFiles(root, assetRoots, { ignore, match: ASSET, maxBytes: Infinity })
+  return listFiles(root, assetRoots, { ignore: [...(ignore ?? []), ...webRoots], match: ASSET, maxBytes: Infinity })
     .map((file) => ({ file, kb: Math.round(statSync(join(root, file)).size / 1024) }))
     .filter(({ kb }) => kb > maxAssetKb)
     .map(({ file, kb }) =>

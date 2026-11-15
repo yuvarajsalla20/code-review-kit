@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 // review-kit automated checks. No dependencies. Run from the project root:
-//   node path/to/review-kit/scripts/check.mjs [path/to/review.config.json]
-// Exit code 1 if any command fails, any forbidden or secret match is found, or a gated check (structure, release, tests, agents) finds something.
-import { readFileSync, statSync, existsSync } from 'node:fs';
+//   node path/to/review-kit/scripts/check.mjs [path/to/review.config.json] [--results results.json]
+// Exit code 1 if any command fails, any forbidden or secret match is found, or a gated check finds something.
+// Exit code 3 (Incomplete) when everything that ran passed but an area that applies has no config block and is not in `skipAreas`.
+import { readFileSync, statSync, existsSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, relative } from 'node:path';
-import { AREAS } from './areas.mjs';
+import { AREAS, coverage } from './areas.mjs';
 import { guard, loadConfig, parseArgs } from './lib/cli.mjs';
 import { walk } from './lib/files.mjs';
 import { printSection } from './lib/section.mjs';
 
 const root = process.cwd();
-const config = loadConfig(root, parseArgs().configPath);
+const args = parseArgs();
+const config = loadConfig(root, args.configPath);
+/** The commands' outcomes, written with --results file.json in the shape summary.mjs --extra reads, so the summary shows them. */
+const ran = [];
 const SECRET_PATTERNS = [
   ['private key block', /-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----/],
   ['service account key', /"private_key"\s*:/],
@@ -22,14 +26,19 @@ const SECRET_PATTERNS = [
 const results = [];
 const fail = (section, line) => results.push({ section, line });
 
+/** The line a test runner ends with ("Tests  271 passed", "# pass 94"), or nothing. */
+const lastCountLine = (out) => (String(out).split('\n').map((l) => l.replace(/\x1b\[[0-9;]*m/g, '').trim()).filter((l) => /\b(pass|passed|failed|fail|tests?)\b/i.test(l) && /\d/.test(l) && !/^duration/i.test(l)).slice(-2).join('; ') || '').slice(0, 160);
+
 // 1. Commands
 console.log('== Commands ==');
 for (const { name, run } of config.commands || []) {
   try {
-    execSync(run, { cwd: root, stdio: 'pipe', encoding: 'utf8' });
+    const out = execSync(run, { cwd: root, stdio: 'pipe', encoding: 'utf8' });
     console.log(`PASS  ${name}`);
+    ran.push({ name, result: 'pass', detail: lastCountLine(out) });
   } catch (e) {
     console.log(`FAIL  ${name}`);
+    ran.push({ name, result: 'fail', detail: lastCountLine(String(e.stdout || e.stderr || e.message)) });
     fail(`command:${name}`, String(e.stdout || e.stderr || e.message).trim().split('\n').slice(0, 15).join('\n'));
   }
 }
@@ -81,13 +90,22 @@ for (const area of AREAS.filter((a) => config[a.key] && !a.slow)) {
   printSection(area.title, area.checks, guard(() => area.run(config, root)), fail, `Review items are not failures: run scripts/${area.script} --report to get the table for the owner.`);
 }
 
-// Areas with no block in the config were not checked. Say so, so "passed" is not read as "everything was looked at".
-const applicable = AREAS.filter((a) => !a.slow && (a.applies?.(root) ?? true));
-const notRun = applicable.filter((a) => !config[a.key]);
+// Areas with no block in the config were not checked. A run that skipped an area is Incomplete, not passed, unless the owner
+// skipped it on purpose, with a reason, in `skipAreas` ({ "agents": "this project has no reviewer agents" }).
+const { applicable, notRun, skipped } = coverage(config, root);
+if (skipped.length) {
+  console.log('\n== Skipped on purpose ==');
+  for (const a of skipped) console.log(`${a.key}: ${config.skipAreas[a.key]}`);
+}
 if (notRun.length) {
   console.log('\n== Not run ==');
   console.log(`${notRun.map((a) => a.key).join(', ')}: no block in review.config.json, so these checks did not run.`);
-  console.log('See which blocks to add, and add them: node <kit>/scripts/upgrade.mjs [--write]');
+  console.log('Add them (node <kit>/scripts/upgrade.mjs --write), or skip one on purpose with a reason under "skipAreas".');
+}
+
+if (args.results) {
+  writeFileSync(args.results, `${JSON.stringify({ results: ran }, null, 2)}\n`);
+  console.log(`\nCommand results written to ${args.results} (pass it to summary.mjs with --extra).`);
 }
 
 // Report
@@ -96,4 +114,8 @@ if (results.length) {
   for (const r of results) console.log(`[${r.section}] ${r.line}`);
   process.exit(1);
 }
-console.log(notRun.length ? `\nAll automated checks that ran passed. ${notRun.length} of ${applicable.length} areas did not run (see above).` : '\nAll automated checks passed.');
+if (notRun.length) {
+  console.log(`\nINCOMPLETE: the checks that ran passed, but ${notRun.length} of ${applicable.length} areas did not run (see above). This is not a pass.`);
+  process.exit(3);
+}
+console.log('\nAll automated checks passed.');

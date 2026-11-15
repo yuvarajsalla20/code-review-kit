@@ -86,7 +86,7 @@ test('works with no config at all, and check.mjs shows the speed area when the c
   assert.equal(spawnSync('node', [join(kit, 'scripts/perf.mjs')], { cwd: root }).status, 0);
   const withBlock = project({ 'package.json': JSON.stringify({ dependencies: { lodash: '4' } }), 'review.config.json': { speed: {} } });
   const out = spawnSync('node', [join(kit, 'scripts/check.mjs')], { cwd: withBlock, encoding: 'utf8' });
-  assert.equal(out.status, 0);
+  assert.equal(out.status, 3, 'speed passed, but the other areas did not run: Incomplete');
   assert.match(out.stdout, /== Speed and cost ==/);
   assert.match(out.stdout, /REVIEW {2}heavy \(1\)/);
   assert.ok(AREAS.some((a) => a.key === 'speed' && a.script === 'perf.mjs'));

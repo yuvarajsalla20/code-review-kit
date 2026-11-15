@@ -13,9 +13,14 @@ const root = process.cwd();
 const args = parseArgs();
 const write = process.argv.includes('--write');
 const config = loadConfig(root, args.configPath);
-const missing = AREAS.filter((a) => !a.slow && !config[a.key] && (a.applies?.(root) ?? true) && STARTERS[a.key]);
+// A library (a shared kit) has no store build and no screens of its own: those areas are skipped on purpose, with the reason written down.
+const LIBRARY_SKIPS = { release: 'a library has no store build; the apps that use it run the release checks', widgets: 'a library draws no widgets of its own' };
+const library = config.design?.kind === 'library';
+const skips = library ? Object.fromEntries(Object.entries(LIBRARY_SKIPS).filter(([k]) => !config[k] && !config.skipAreas?.[k])) : {};
+const missing = AREAS.filter((a) => !a.slow && !config[a.key] && !config.skipAreas?.[a.key] && !skips[a.key] && (a.applies?.(root) ?? true) && STARTERS[a.key]);
 
-if (!missing.length) {
+for (const [k, why] of Object.entries(skips)) console.log(`${write ? 'Skipping' : 'Would skip'} "${k}" on purpose: ${why}`);
+if (!missing.length && !Object.keys(skips).length) {
   console.log('Every check area already has a block in review.config.json.');
   process.exit(0);
 }
@@ -26,6 +31,7 @@ for (const a of missing) {
 }
 if (write) {
   const path = args.configPath || join(root, 'review.config.json');
-  writeFileSync(path, `${JSON.stringify({ ...JSON.parse(readFileSync(path, 'utf8')), ...blocks }, null, 2)}\n`);
+  const current = JSON.parse(readFileSync(path, 'utf8'));
+  writeFileSync(path, `${JSON.stringify({ ...current, ...blocks, ...(Object.keys(skips).length ? { skipAreas: { ...current.skipAreas, ...skips } } : {}) }, null, 2)}\n`);
   console.log(`\nWrote ${path}. Run check.mjs to see the new rows.`);
 } else console.log('\nNothing written. Run again with --write to add them.');

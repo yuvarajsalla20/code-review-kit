@@ -5,7 +5,9 @@ import { spawnSync } from 'node:child_process';
 import { project } from './helpers.mjs';
 
 const check = join(import.meta.dirname, '..', 'scripts', 'check.mjs');
-const run = (files, config) => spawnSync('node', [check], { cwd: project({ ...files, 'review.config.json': config }), encoding: 'utf8' });
+// These tests are about commands, patterns and secrets: every area is skipped on purpose, so a clean run is a pass (exit 0), not Incomplete.
+const SKIP_ALL = { skipAreas: Object.fromEntries(['structure', 'release', 'tests', 'agents', 'speed', 'links', 'widgets'].map((a) => [a, 'not part of this test'])) };
+const run = (files, config) => spawnSync('node', [check], { cwd: project({ ...files, 'review.config.json': typeof config === 'string' ? config : { ...SKIP_ALL, ...config } }), encoding: 'utf8' });
 
 test('check.mjs still passes a clean project, and runs commands', () => {
   const r = run({ 'src/a.ts': 'export const a = 1;' }, { forbidden: [{ name: 'log', pattern: 'console\\.log\\(', paths: ['src'] }], commands: [{ name: 'ok', run: 'node -e "0"' }] });
@@ -74,4 +76,11 @@ test('check.mjs runs the agents checks when the config has an agents block', () 
   const r = run({ 'agents/x/a.md': bad, 'skills/s/SKILL.md': '`a`', 'rules/review-rules.md': '# r' }, cfg({ agents: {} }));
   assert.equal(r.status, 1);
   assert.match(r.stdout, /FAIL {2}frontmatter/);
+});
+
+test('a skip needs a reason: an empty reason still counts as not run', () => {
+  const r = spawnSync('node', [check], { cwd: project({ 'src/a.ts': '', 'review.config.json': { ...SKIP_ALL, skipAreas: { ...SKIP_ALL.skipAreas, links: ' ' } } }), encoding: 'utf8' });
+  assert.equal(r.status, 3);
+  assert.match(r.stdout, /== Not run ==\nlinks: no block/);
+  assert.match(r.stdout, /== Skipped on purpose ==\nstructure: not part of this test/);
 });

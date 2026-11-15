@@ -163,7 +163,8 @@ test('the command line exits 1 on a gated finding, 0 when clean, and writes the 
   assert.equal(run(elsewhere, join(elsewhere, 'other.json'), '--report', join(elsewhere, 'r.md')).status, 1);
   assert.equal(run(elsewhere, '--report', join(elsewhere, 'r2.md'), join(elsewhere, 'other.json')).status, 1);
   const viaCheck = spawnSync('node', [join(kit, 'check.mjs')], { cwd: bad, encoding: 'utf8' });
-  assert.equal(viaCheck.status, 0, 'check.mjs only runs structure when the config has a structure block');
+  assert.equal(viaCheck.status, 3, 'check.mjs only runs structure when the config has a structure block; with no blocks the run is Incomplete');
+  assert.doesNotMatch(viaCheck.stdout, /cycles/);
   writeFileSync(join(bad, 'review.config.json'), JSON.stringify({ name: 'bad', structure: {} }));
   const gated = spawnSync('node', [join(kit, 'check.mjs')], { cwd: bad, encoding: 'utf8' });
   assert.equal(gated.status, 1);

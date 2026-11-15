@@ -1,0 +1,21 @@
+{
+  "verifiedBy": "agents",
+  "add": [
+    {
+      "area": "logic",
+      "severity": "High",
+      "where": "src/widgets/timeline.ts:61",
+      "what": "ahead() keeps only items whose due time is in the future; repeating items sit on their last, passed occurrence",
+      "meaning": "Repeating reminders never show in the widget",
+      "impact": "People see 'Nothing due' while their daily reminders are still coming.",
+      "trigger": "A daily reminder after its first ring",
+      "fix": "Use each repeating item's next occurrence, and add a test with a daily item.",
+      "effort": "small",
+      "proof": "test"
+    }
+  ],
+  "drop": ["speed:lists|src/components/WorkspaceChips.tsx:15"],
+  "override": { "release:permissionUse|app.json": { "severity": "High", "proof": "code" } },
+  "couldNot": ["Live Activity behaviour on a real iPhone"],
+  "results": [{ "name": "Firestore load", "result": "pass", "detail": "1,000 users, 0 errors" }]
+}

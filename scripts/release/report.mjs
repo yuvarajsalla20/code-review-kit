@@ -4,9 +4,12 @@ export const TITLES = {
   lockfile: 'Lock file and clean install',
   appConfig: 'App settings the store needs',
   permissions: 'Permission reason texts',
+  permissionUse: 'Permission texts match what the code does',
   tracked: 'Secret files in git',
   privacy: 'Privacy policy covers what the app uses',
   kits: 'Shared kit versions match what is pinned',
+  kitTests: 'Kits test on the versions the app ships',
+  storeKeys: 'Store keys have the production prefix',
 };
 
 export const toMarkdown = (project, kitVersion, date, result) =>

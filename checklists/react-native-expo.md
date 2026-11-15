@@ -13,3 +13,5 @@
 - [ ] Back gesture / hardware back does not trap the user or lose unsaved input silently.
 - [ ] Bundle: no unused heavy dependencies; images and fonts are sized for use.
 - [ ] Version, build number, bundle id and package name are correct and consistent.
+- [ ] Incoming links are safe to receive: see `deep-links.md`.
+- [ ] Widgets and Live Activities, if any: see `widgets.md`.

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.12.0 - 2026-11-15
+- A run that skipped an area is Incomplete: `check.mjs` exits 3 and the summary verdict says Incomplete. `skipAreas` leaves an area out on purpose, with a reason; `upgrade.mjs` writes the library skips.
+- New areas: `links` (parsing that can throw, link handlers that may drop unsaved input) and `widgets` (personal text on a locked phone, timelines that run out). New checklists `deep-links.md` and `widgets.md`.
+- `release`: `permissionUse` (narrow permission text, wider use in code), `storeKeys` (gated: production key prefixes, or a build guard), `kitTests` (kit tested on other React/RN/Expo versions than the app). `kits` now reads git+https and github: pins; before, it silently found none.
+- `firestore-load.mjs`: rules and load on the local emulator with the project's real rules, from a `firestoreLoad` block.
+- `e2e.mjs`: test-ID coverage, and starter Maestro flows (with broken-link variants) from an `e2e` block.
+- Summary: Test results table (`check.mjs --results`), a Proof column, Level in the decision table, New/Still open/Fixed with `--previous`, several `--extra` files joined. Reviewers end with a JSON hand-off block (`templates/findings.json`).
+- `decide.mjs` reads the owner's marks back and adds accepted rows to `review.accepted.json` with `--write`.
+- `speed.webRoots` (default `public`) keeps website media out of the app-weight check.
+- 21 new tests (115 in all). Proven on HringNring: the new checks find the location prompt text, both widget issues, the crashing link decode and the lost-form link handler; the load run finds the account-erase race.
+
 ## 1.11.0 - 2026-11-06
 - `review.accepted.json`: accept a finding once, with a reason and date. Accepted rows move to their own table and stop counting; entries that match nothing are reported as stale.
 - `check.mjs` lists the areas that did not run, and `upgrade.mjs` previews (and with `--write` adds) the missing config blocks. Agents area is skipped when the project has no `agents/` folder.

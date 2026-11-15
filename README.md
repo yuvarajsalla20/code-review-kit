@@ -76,6 +76,8 @@ Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which 
 | `scripts/agents.mjs` | The kit checks its own agents: front matter, required sections, broken references, the pointer to the shared rules, the tool allow-list (`agents.allowedTools`), repeated lines, unused agents, length. Needs no config. Run from the kit root with `--report`. |
 | `scripts/release.mjs`, `scripts/testmap.mjs` | Release readiness (lock file, app settings, permission texts, tracked secret files, privacy keywords) and risky files no test reaches. Both take `--report` and `--json`; settings are the `release` and `tests` blocks in `review.config.json`. |
 | `scripts/perf.mjs` | Speed and cost candidates: large images and media, heavy packages, animations without the native driver, timers and listeners with no stop, long lists drawn with `.map` inside a ScrollView. Works with no config; the `speed` block changes the settings. Advisory: nothing gates unless `speed.gate` says so. Code lives in `scripts/perf/`. See **Speed checks**. |
+| `scripts/links.mjs`, `scripts/widgets.mjs` | Links and parsing; widgets and Lock Screen (1.12.0). Code in `scripts/links/` and `scripts/widgets/`. |
+| `scripts/firestore-load.mjs`, `scripts/e2e.mjs`, `scripts/decide.mjs` | Firestore rules and load on the emulator; end-to-end starters; the owner's decisions read back (1.12.0). |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
 | `tests/` | Offline tests for the scripts: `node --test tests/*.test.mjs`. |
 | `templates/` | `review.config.json`, `report.md`, `architecture-report.md`, `structure-report.md`, `db-report.md`, `summary-report.md`, `decision-report.md`, `architecture-intake.md`, `manual-test.md`. |
@@ -141,6 +143,35 @@ Added in 1.10.0. `node <kit>/scripts/perf.mjs --report speed-report.md` from the
 
 Launch time, frame rate, memory and battery need a real, older phone and are never scripted. For a library (a kit, not an app) set `design.kind` to `"library"` in the config: `performance-reviewer` then asks what a project pays per render, per install and per mount, and skips launch path and stored data.
 
+## Added in 1.12.0
+
+Learned from a full review of a shipping app (HringNring, Nov 15 2026): every script passed, while the real bugs came from the reviewer agents and from tests built by hand. These close that gap.
+
+| What | How |
+|---|---|
+| A skipped area is not a pass | `check.mjs` ends with **INCOMPLETE** and exit code 3 when an area that applies has no config block. The summary's verdict is **Incomplete**. To leave an area out on purpose, give the reason: `"skipAreas": { "agents": "no reviewer agents in this app" }` (a skip with no reason still counts as not run). `upgrade.mjs` writes the library skips for a kit (`design.kind: "library"`). |
+| Links and parsing (`links`, new area) | `node <kit>/scripts/links.mjs`. `unguarded`: `decodeURIComponent`, `JSON.parse` or `new URL` outside a try block (a link with a stray `%` crashes the app). `handlers`: code that receives incoming links with no sign it checks for unsaved input. Advisory. Walk `checklists/deep-links.md` too. |
+| Widgets and Lock Screen (`widgets`, new area) | Runs when the app uses `expo-widgets` or another widget package. `lockscreen`: a widget or Live Activity draws text with no `privacySensitive`/`redacted` marker. `timeline`: a timeline with a fixed number of entries, which iOS does not refill. Advisory. Walk `checklists/widgets.md` too (repeating items, midnight, time zones, duplicate Live Activities). |
+| Permission text against the code (`permissionUse`, in `release`) | A reason text that promises a narrow use ("only when you tap Current") while the code uses the permission in two or more places is a row, with each call listed. |
+| Store keys (`storeKeys`, in `release`, gated) | `release.keyPrefixes`, e.g. `{ "EXPO_PUBLIC_RC_IOS_KEY": "appl_" }`. A wrong value in `eas.json` (the `productionProfiles`) or a tracked `.env` fails. When the value lives only in the build service, a build guard must exist (a file that names the key and the prefix); the row gives one. |
+| Kit pins and kit tests (`kits`, `kitTests`, in `release`) | Kits pinned as `git+https://github.com/o/r.git#<sha>` or `github:o/r#<sha>` are now read (before, only codeload tarballs were, so the check passed without looking). `kitTests` flags a kit whose own tests run on another React, React Native or Expo version than the app ships. |
+| Firestore rules and load (`firestore-load.mjs`) | With a `firestoreLoad` block (see the template): starts the local emulator with your real rules and runs rule checks (other users, signed out, unknown fields, your own `invalid` samples, writes after the account is erased), many users at once, two phones racing on the same items (newest wins), a heavy account's first load, and an account erase while another phone keeps adding, in both orders. Needs Java; installs its tools into `~/.cache/review-kit` (never the project); the project id must start with `demo-`. `--report load.md --results load.json`. |
+| End-to-end starters (`e2e.mjs`) | Reports how many files with buttons or inputs set a `testID`. With an `e2e` block and `--out <folder>`, writes starter Maestro flows: launch, sign in, add and restart, and every link the app handles plus broken versions of each. |
+| Reviewer findings flow into the summary | Every reviewer ends with a JSON block (`templates/findings.json`, "Hand-off file" in `rules/review-rules.md`). `summary.mjs --extra a.json,b.json,...` joins them. |
+| Test results in the summary | `check.mjs --results results.json` writes the commands' outcomes; pass it with `--extra` and the summary has a Test results table (unit, integration, load). |
+| Proof per row | Each row says how it is known: script match, read in the code, shown by a test, or needs a device to confirm. |
+| New, still open, fixed | `summary.mjs --previous last-summary.json` (the `--json` output of the last run) marks each row New or Still open, ignoring line numbers, and lists what was fixed since. |
+| Decisions are kept | `decide.mjs --report summary.md --previous summary.json` reads the marked "Your decision" column (fix, later, `accept: <reason>`), lists the fix rows and, with `--write`, adds accepted script rows to `review.accepted.json`. |
+| Website files are not app weight | `speed.webRoots` (default `public`) is left out of the large-file check. |
+
+### Kits pinned to a git commit
+
+`npm ci` fetches each git-pinned kit as a tarball from `codeload.github.com`. Where that host is blocked (some sandboxes), install the other packages first, then copy each kit at its pinned commit into `node_modules/<kit>` (`git archive <sha> | tar -x -C node_modules/<kit>`), and run the checks. Note in the summary that the lock file was not proven by a clean install.
+
+### Reviewing your kits
+
+Give each kit repository its own `review.config.json` with `"design": { "kind": "library" }`, then run `upgrade.mjs --write`: it adds the starter blocks and skips release and widgets with the reason written down. The app's `kitTests` row then tells you when a kit tests on older versions than the app ships.
+
 ## Added in 1.11.0
 
 | What | How |
@@ -177,4 +208,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.11.0 - 2026-11-06 8:25 AM CT
+Version 1.12.0 - 2026-11-15 3:30 AM CT
