@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0 - 2026-11-15
+- Email the report: a new `email` block in `review.config.json` and `scripts/email.mjs`. After a review the assistant sends the verdict, counts and fix-first list, with `summary.html` attached, through the owner's mail connector. The kit never sends mail itself.
+- Addresses live in a local `review.email.json` (`main` plus any number of `allowed`), never in the config. The script refuses any address not on the list, stops if the file is committed to git, and warns while it is not in `.gitignore`.
+- `code-review` and `review-summary` end with the email step; `rules/review-rules.md` has "Emailing the report". New template `templates/review.email.example.json`.
+- 8 new tests (125 in all).
+
 ## 1.12.1 - 2026-11-15
 - `widgets` timeline check: a plan that ends on a refresh entry (`refresh: true`, `stale: true`) is no longer a row, and a call that only hands iOS a single entry or a plan built by a function is checked where the plan is built, not at the call. Found while fixing HringNring, where the fixed timeline was still flagged twice.
 - `firestoreLoad.eraseOrder` (`ownerFirst` or `itemsFirst`): the order the app erases an account in. Only that order is tested, so an app that already deletes the owner document first no longer fails on the unsafe order it does not use. Without it, both orders run as before.

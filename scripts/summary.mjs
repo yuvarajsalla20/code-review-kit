@@ -24,6 +24,6 @@ const notRun = args.areas ? [] : coverage(config, root).notRun.map((a) => a.key)
 const model = buildModel(guard(() => collect(config, root, args.areas?.split(','))), extra, { project: projectName(config, root), kitVersion: KIT_VERSION, timeZone: config.timezone, notRun, previous });
 if (args.html) {
   writeFileSync(args.html, toHtml(model));
-  console.log(`Page written to ${args.html}`);
+  (args.json ? console.error : console.log)(`Page written to ${args.html}`); // keep --json output clean
 }
 finish({ args, result: model, markdown: toMarkdown(model), failed: model.verdictKey === 'not' });

@@ -78,6 +78,7 @@ Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which 
 | `scripts/perf.mjs` | Speed and cost candidates: large images and media, heavy packages, animations without the native driver, timers and listeners with no stop, long lists drawn with `.map` inside a ScrollView. Works with no config; the `speed` block changes the settings. Advisory: nothing gates unless `speed.gate` says so. Code lives in `scripts/perf/`. See **Speed checks**. |
 | `scripts/links.mjs`, `scripts/widgets.mjs` | Links and parsing; widgets and Lock Screen (1.12.0). Code in `scripts/links/` and `scripts/widgets/`. |
 | `scripts/firestore-load.mjs`, `scripts/e2e.mjs`, `scripts/decide.mjs` | Firestore rules and load on the emulator; end-to-end starters; the owner's decisions read back (1.12.0). |
+| `scripts/email.mjs` | Prepares the report email for the assistant to send with your mail connector, only to addresses you allow (1.13.0). See **Email the report**. |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
 | `tests/` | Offline tests for the scripts: `node --test tests/*.test.mjs`. |
 | `templates/` | `review.config.json`, `report.md`, `architecture-report.md`, `structure-report.md`, `db-report.md`, `summary-report.md`, `decision-report.md`, `architecture-intake.md`, `manual-test.md`. |
@@ -142,6 +143,50 @@ Added in 1.10.0. `node <kit>/scripts/perf.mjs --report speed-report.md` from the
 | `gate` | Checks that fail the run | `[]` |
 
 Launch time, frame rate, memory and battery need a real, older phone and are never scripted. For a library (a kit, not an app) set `design.kind` to `"library"` in the config: `performance-reviewer` then asks what a project pays per render, per install and per mount, and skips launch path and stored data.
+
+## Email the report
+
+Added in 1.13.0. After a review, the assistant can email you the result: the verdict, the counts and the five things to fix first in the message, and `summary.html` attached. The kit never sends mail itself. It prepares the message, and the assistant sends it from your own mailbox through a mail connector (for example the Gmail connector in Claude).
+
+**1. Turn it on** in `review.config.json`:
+
+```json
+"email": { "enabled": true, "addressesFile": "review.email.json", "attach": ["summary.html"], "send": "always" }
+```
+
+| `email` key | Meaning | Default |
+|---|---|---|
+| `enabled` | `false` turns emailing off without removing the block | `true` |
+| `addressesFile` | The local file with the addresses | `review.email.json` |
+| `attach` | Files to attach, relative to the project root | `["summary.html"]` |
+| `send` | `always`: send after every review. `ask`: show the email and send when you say so | `always` |
+| `subjectPrefix` | Start of the subject line | `Code review` |
+
+**2. Add your addresses** in a local file, never in the config (copy `templates/review.email.example.json`):
+
+```json
+{
+  "main": "you@example.com",
+  "allowed": ["you@example.com", "teammate@example.com", "qa@example.com"]
+}
+```
+
+- `main` gets every report.
+- `allowed` can hold as many addresses as you like. They get a report only when you ask: "review and send to all", or "send it to teammate@example.com".
+- An address that is not on the list is refused, whoever asks, and nothing is sent.
+
+**3. Keep the file out of git.** Add `review.email.json` to `.gitignore`. The script stops with a clear message if the file is committed, and warns while it is not ignored, so a public repository never shows your addresses.
+
+**Run it by hand**
+
+```
+node <kit>/scripts/summary.mjs --json > summary.json
+node <kit>/scripts/email.mjs --check
+node <kit>/scripts/email.mjs --summary summary.json --out review-out/email.json
+node <kit>/scripts/email.mjs --summary summary.json --to all --out review-out/email.json
+```
+
+`--check` confirms the setup and lists the allowed addresses. The prepared file holds `to`, `subject`, `body`, `htmlBody` and the `attachments` paths. The `code-review` and `review-summary` skills do all of this at the end of a review, following "Emailing the report" in `rules/review-rules.md`.
 
 ## Added in 1.12.0
 
@@ -208,4 +253,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.12.1 - 2026-11-15
+Version 1.13.0 - 2026-11-15 9:10 AM CT

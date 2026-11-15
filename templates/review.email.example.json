@@ -1,0 +1,4 @@
+{
+  "main": "you@example.com",
+  "allowed": ["you@example.com", "teammate@example.com"]
+}

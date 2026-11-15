@@ -4,7 +4,7 @@ import { basename, join } from 'node:path';
 import { ConfigError } from './findings.mjs';
 import { KIT_VERSION } from './version.mjs';
 
-const VALUE_FLAGS = ['report', 'html', 'extra', 'areas', 'previous', 'results', 'out'];
+const VALUE_FLAGS = ['report', 'html', 'extra', 'areas', 'previous', 'results', 'out', 'summary', 'to'];
 
 /** Flags and the config path: `--report out.md`, `--html out.html`, `--extra file.json`, `--areas a,b`, `--json`, and an optional config path as the first plain argument. */
 export function parseArgs(argv = process.argv.slice(2)) {

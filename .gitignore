@@ -13,3 +13,4 @@ review-report*.md
 /summary.html
 /verified.json
 review-out/
+/review.email.json

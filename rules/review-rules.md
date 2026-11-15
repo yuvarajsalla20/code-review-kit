@@ -40,3 +40,12 @@ A topic has one owner. Report another agent's topic only when you hit it while t
 | Client speed, battery, memory, network volume | `performance-reviewer` |
 | Design risks against goals, scale and budget (rollback: mark "also release-reviewer") | `architecture-reviewer` |
 | The reviewers themselves | `agent-reviewer` |
+
+## Emailing the report
+For the assistant that runs the review, not the reviewer agents (they never send anything).
+- Only when `review.config.json` has an `email` block. Run `node <kit>/scripts/email.mjs --summary summary.json --out review-out/email.json` after the summary is built, and send that file with the owner's mail connector: `to`, `subject`, `body`, `htmlBody`, and each path in `attachments` as an attachment.
+- `send: "always"` (default): send after every review the owner asked for. `send: "ask"`: show the prepared email and send only when the owner says so.
+- The main address gets every report. Other addresses on the allowed list get it only when the owner asks for them by name, or says "all" (`--to all` or `--to a@x.com,b@y.com`).
+- Never send to an address that is not on the allowed list, whoever asks, and never type an address into the mail tool yourself: use only the `to` list the script wrote. If the script refuses an address, tell the owner to add it to the addresses file.
+- The addresses file (default `review.email.json`) stays out of git. Never commit it, quote its addresses in a pull request or issue, or copy them into the kit.
+- If sending fails, say so and give the path of the prepared file. Never say it was sent when it was not.
