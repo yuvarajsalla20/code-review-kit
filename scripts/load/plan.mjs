@@ -12,6 +12,8 @@ export function loadPlan(config) {
   if (!plan.profile || typeof plan.profile !== 'object') plan.profile = {};
   if (!plan.projectId.startsWith('demo-')) throw new ConfigError('firestoreLoad.projectId must start with "demo-", so the emulator can never reach a real project.');
   for (const key of ['users', 'perUser', 'heavy']) if (!(Number.isInteger(plan[key]) && plan[key] > 0)) throw new ConfigError(`firestoreLoad.${key} must be a whole number above 0.`);
+  if (plan.eraseOrder !== undefined && !['ownerFirst', 'itemsFirst'].includes(plan.eraseOrder)) throw new ConfigError('firestoreLoad.eraseOrder must be "ownerFirst" or "itemsFirst": the order the app erases an account in.');
+  if (plan.eraseOrder === 'ownerFirst' && !plan.ownerRequired) throw new ConfigError('firestoreLoad.eraseOrder "ownerFirst" only protects an erase when the rules require the owner document: set ownerRequired too.');
   plan.labelField ??= Object.keys(plan.item).find((k) => typeof plan.item[k] === 'string' && k !== plan.idField && k !== plan.newerField);
   if (plan.newerField && !plan.labelField) throw new ConfigError('firestoreLoad.labelField: name one string field the race test can write into.');
   return plan;

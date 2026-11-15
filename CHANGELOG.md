@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.1 - 2026-11-15
+- `widgets` timeline check: a plan that ends on a refresh entry (`refresh: true`, `stale: true`) is no longer a row, and a call that only hands iOS a single entry or a plan built by a function is checked where the plan is built, not at the call. Found while fixing HringNring, where the fixed timeline was still flagged twice.
+- `firestoreLoad.eraseOrder` (`ownerFirst` or `itemsFirst`): the order the app erases an account in. Only that order is tested, so an app that already deletes the owner document first no longer fails on the unsafe order it does not use. Without it, both orders run as before.
+- 2 new tests (117 in all).
+
 ## 1.12.0 - 2026-11-15
 - A run that skipped an area is Incomplete: `check.mjs` exits 3 and the summary verdict says Incomplete. `skipAreas` leaves an area out on purpose, with a reason; `upgrade.mjs` writes the library skips.
 - New areas: `links` (parsing that can throw, link handlers that may drop unsaved input) and `widgets` (personal text on a locked phone, timelines that run out). New checklists `deep-links.md` and `widgets.md`.

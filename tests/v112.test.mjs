@@ -224,3 +224,20 @@ test('upgrade.mjs skips release and widgets on purpose for a library, with the r
   assert.equal(cfg.release, undefined);
   assert.ok(cfg.links && cfg.structure);
 });
+
+test('widgets 1.12.1: a plan ending on a refresh entry, and calls that only hand a plan over, are not rows', () => {
+  const pkg = { 'package.json': { dependencies: { 'expo-widgets': '1' } } };
+  const ends = project({ ...pkg, 'src/w/timeline.ts': 'const MAX_ENTRIES = 100;\nexport const nextUpTimeline = (now: Date) => [{ date: now }, { date: now, props: { refresh: true } }];' });
+  assert.equal(rows(runWidgets({}, ends), 'timeline').length, 0);
+  const hands = project({ ...pkg, 'src/w/use.ts': 'w.updateTimeline([{ date: now, props: EMPTY }]);\nw.updateTimeline(nextUpTimeline(list, now));' });
+  assert.equal(rows(runWidgets({}, hands), 'timeline').length, 0);
+  const built = project({ ...pkg, 'src/w/use.ts': 'const entries = list.map((r) => ({ date: r.at }));\nw.updateTimeline(entries);' });
+  assert.equal(rows(runWidgets({}, built), 'timeline').length, 1);
+});
+
+test('load plan 1.12.1: eraseOrder names the app\'s own erase order and needs ownerRequired for ownerFirst', () => {
+  const base = { owner: 'users/{uid}', items: 'users/{uid}/items', item: { name: 'x' }, projectId: 'demo-x' };
+  assert.equal(loadPlan({ firestoreLoad: { ...base, ownerRequired: true, eraseOrder: 'ownerFirst' } }).eraseOrder, 'ownerFirst');
+  assert.throws(() => loadPlan({ firestoreLoad: { ...base, eraseOrder: 'ownerFirst' } }), /ownerRequired/);
+  assert.throws(() => loadPlan({ firestoreLoad: { ...base, eraseOrder: 'last' } }), /ownerFirst/);
+});

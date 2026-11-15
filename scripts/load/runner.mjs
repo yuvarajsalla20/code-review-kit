@@ -140,7 +140,8 @@ if (plan.newerField) {
     const left = (await getDocs(collection(db, itemsPath('heavy')))).size;
     say('load', `erase the account (${ownerFirst ? 'owner document first' : 'items first, owner document last'}) while another phone keeps adding`, !error && left === 0, `${rounds} rounds, the other phone added ${added}, ${left} left${error ? `, ${error}` : ''}`);
   };
-  await erase(false);
-  if (plan.ownerRequired) await erase(true);
+  // With eraseOrder, only the app's own order is tested. Without it, both, so the report shows which one is safe.
+  if (plan.eraseOrder !== 'ownerFirst') await erase(false);
+  if (plan.ownerRequired && plan.eraseOrder !== 'itemsFirst') await erase(true);
 }
 await env.cleanup();
