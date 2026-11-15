@@ -112,6 +112,20 @@ test('repeated values: lists in two places, text in three files, rules files inc
   assert.equal(findRepeatedValues(texts({ 'a.ts': "const t = 'x ignore me please';", 'b.ts': "const t = 'x ignore me please';", 'c.ts': "const t = 'x ignore me please';" }), { ignore: ['x ignore me please'] }).length, 0);
 });
 
+test('repeated values: code between two short strings is not text', () => {
+  const style = "const s = { bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' } };";
+  const label = '<Image source={x} accessibilityLabel="Ring ring" />';
+  const found = findRepeatedValues(texts({ 'a.tsx': `${style}\n${label}`, 'b.tsx': `${style}\n${label}`, 'c.tsx': `${style}\n${label}` }));
+  assert.deepEqual(found, []);
+  const real = findRepeatedValues(texts({ 'a.ts': "f('row', 'Keep Editing')", 'b.ts': "f('row', 'Keep Editing')", 'c.ts': "f('row', 'Keep Editing')" }));
+  assert.deepEqual(real.map((f) => f.value), ['Keep Editing']);
+});
+
+test('repeated values: style and platform words never count', () => {
+  const code = "const s = { justifyContent: 'space-between', backgroundColor: 'transparent' }; Alert.alert('t', 'm', [{ style: 'destructive' }]);";
+  assert.deepEqual(findRepeatedValues(texts({ 'a.tsx': code, 'b.tsx': code, 'c.tsx': code })), []);
+});
+
 test('size: flags long files and long functions, and not short ones', () => {
   const longFn = `export function big() {\n${'  doThing();\n'.repeat(90)}}\n`;
   const result = findOversize(texts({ 'big.ts': longFn, 'small.ts': 'export const f = (x) => x + 1;\n' }), { maxFileLines: 50, maxFunctionLines: 80 });

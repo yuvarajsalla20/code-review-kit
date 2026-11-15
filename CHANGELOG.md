@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.14.0 - 2026-11-15
+- `structure` repeated text: code between two short strings (`'row', alignItems: 'center'`, or `x="a" accessibilityLabel="b"`) is no longer read as text. Every string is now matched whole, short ones too, so a match can no longer start at a closing quote. Found on HringNring, where five of the sixteen repeated-text rows were style keys or JSX attribute names.
+- `structure` repeated text: style and platform words (`space-between`, `flex-start`, `transparent`, Alert's `destructive` and the like) never count. They are the same everywhere by design.
+- `review.accepted.json`: a row found in several files (repeated text) is accepted by an entry naming any one of those files, with `contains` for the value. Before, such a row could not be accepted at all.
+- 3 new tests (128 in all).
+
 ## 1.13.0 - 2026-11-15
 - Email the report: a new `email` block in `review.config.json` and `scripts/email.mjs`. After a review the assistant sends the verdict, counts and fix-first list, with `summary.html` attached, through the owner's mail connector. The kit never sends mail itself.
 - Addresses live in a local `review.email.json` (`main` plus any number of `allowed`), never in the config. The script refuses any address not on the list, stops if the file is committed to git, and warns while it is not in `.gitignore`.

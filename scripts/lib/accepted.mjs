@@ -29,7 +29,9 @@ export function loadAccepted(root, config, known) {
 
 /** `src/a.ts:12-30` is in `src/a.ts`: line numbers drift, so an entry names the file. */
 export const fileOf = (where) => where.replace(/:[\d-]+$/, '');
-const covers = (entry, f) => entry.check === f.check && entry.file === fileOf(f.where) && (!entry.contains || f.what.includes(entry.contains));
+/** A row found in several places (`a.ts:3 | b.ts:9`) is covered by an entry naming any one of those files. */
+const filesOf = (where) => where.split(' | ').map(fileOf);
+const covers = (entry, f) => entry.check === f.check && filesOf(f.where).includes(entry.file) && (!entry.contains || f.what.includes(entry.contains));
 
 /**
  * Moves the rows an entry covers out of `findings` into `accepted` (with the reason and date), and lists entries that cover nothing as `stale`.

@@ -76,7 +76,17 @@ export function findDuplicateBlocks(texts, { minLines = 6, minChars = 120 } = {}
 
 const NUMBER_LIST = /\[\s*(?:-?\d+(?:\.\d+)?\s*,\s*){3,}-?\d+(?:\.\d+)?\s*,?\s*\]/g;
 const WORD_LIST = /\[\s*(?:(['"])[^'"\n]{1,30}\1\s*,\s*){3,}(['"])[^'"\n]{1,30}\2\s*,?\s*\]/g;
-const LONG_STRING = /(['"])((?:\\.|(?!\1)[^\\\n]){10,})\1/g;
+// Every quoted string, short ones too: matching only long ones let a match start at the closing quote of a short
+// string and run to the next opening quote, so code between two strings (`, alignItems: `) counted as text.
+const STRING = /(['"])((?:\\.|(?!\1)[^\\\n])*)\1/g;
+const MIN_TEXT = 10;
+
+/** Style and platform words (React Native, CSS, Alert button styles): the same everywhere by design, so never "text". */
+export const PLATFORM_WORDS = new Set([
+  'space-between', 'space-around', 'space-evenly', 'flex-start', 'flex-end', 'transparent', 'destructive', 'row-reverse',
+  'column-reverse', 'wrap-reverse', 'line-through', 'capitalize', 'number-pad', 'decimal-pad', 'email-address', 'phone-pad',
+  'light-content', 'dark-content', 'overFullScreen', 'interactive', 'automatic', 'fullScreen', 'pageSheet', 'formSheet',
+]);
 
 const place = (map, key, file, line) => {
   if (!map.has(key)) map.set(key, []);
@@ -96,7 +106,7 @@ export function findRepeatedValues(texts, { minFiles = 3, ignore = [] } = {}) {
     for (const re of [NUMBER_LIST, WORD_LIST]) {
       for (const m of body.matchAll(re)) place(lists, m[0].replace(/\s+/g, '').replace(/,\]$/, ']').replace(/"/g, "'"), file, at(m.index));
     }
-    for (const m of body.matchAll(LONG_STRING)) if (!ignore.includes(m[2])) place(strings, m[2], file, at(m.index));
+    for (const m of body.matchAll(STRING)) if (m[2].length >= MIN_TEXT && !PLATFORM_WORDS.has(m[2]) && !ignore.includes(m[2])) place(strings, m[2], file, at(m.index));
   }
   const spread = (list) => new Set(list.map((p) => p.file)).size;
   return [
