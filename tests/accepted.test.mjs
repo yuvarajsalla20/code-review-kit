@@ -148,3 +148,18 @@ test('the summary says who verified the rows: agents, self-review, or not run', 
   assert.match(run({ verifiedBy: 'agents' }), /Agent verification: Verified by separate reviewer agents/);
   assert.match(run({ verifiedBy: 'bogus' }), /Agent verification: Not run/, 'an unknown value never counts as verified');
 });
+
+test('a row found in several files is accepted by naming any one of them, narrowed by contains', () => {
+  const result = {
+    findings: [
+      { check: 'repeated', where: 'src/a.ts:3 | src/b.ts:9 | src/c.ts:1', what: 'The same text workspaces is written out in 3 places' },
+      { check: 'repeated', where: 'src/a.ts:5 | src/d.ts:2 | src/e.ts:4', what: 'The same text Keep Editing is written out in 3 places' },
+    ],
+    counts: { repeated: 2 },
+  };
+  const e = { area: 'structure', check: 'repeated', file: 'src/b.ts', contains: 'workspaces', reason: 'A typed key', date: '2026-11-15' };
+  const r = applyAccepted(result, [e], 'structure');
+  assert.deepEqual(r.findings.map((f) => f.what), ['The same text Keep Editing is written out in 3 places']);
+  assert.equal(r.accepted.length, 1);
+  assert.equal(applyAccepted(result, [{ ...e, file: 'src/z.ts' }], 'structure').findings.length, 2, 'a file not in the row never matches');
+});

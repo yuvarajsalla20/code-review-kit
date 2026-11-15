@@ -104,7 +104,7 @@ Added in 1.4.0. Set up with a `structure` block in `review.config.json` (a ready
 | `layers` | An import from one layer into a layer it may not use, per your `layers` map (`mayImport`) | Gate |
 | `restricted` | A package imported outside its allowed place, e.g. `firebase` only inside `src/data` | Gate |
 | `duplicates` | `minLines` or more meaningful lines (and `minChars` characters) repeated in two or more places; imports and bracket-only lines do not count | Review |
-| `repeated` | The same list of four or more numbers or words written twice or more, or the same text of ten or more characters in `minFiles` files. `extra` adds files such as `firestore.rules` | Review |
+| `repeated` | The same list of four or more numbers or words written twice or more, or the same text of ten or more characters in `minFiles` files. Style and platform words such as `space-between`, `transparent` or `destructive` never count. `extra` adds files such as `firestore.rules` | Review |
 | `size` | Files over `maxFileLines`, top-level functions over `maxFunctionLines` | Review |
 
 **Gate** means the run exits 1 and the owner must fix it or accept it by removing the check from the `gate` list. **Review** items are listed in the table and the owner decides. Change which checks gate with `gate`.
@@ -221,7 +221,7 @@ Give each kit repository its own `review.config.json` with `"design": { "kind": 
 
 | What | How |
 |---|---|
-| Accept a row once, with a reason | A `review.accepted.json` next to the config: a list of `{ "area", "check", "file", "reason", "date" }` (optional `"contains"` narrows it to one row of that file). Matching rows move to an "Accepted earlier" table and stop counting. An entry that matches nothing is reported as stale. The kit never writes this file; you do. |
+| Accept a row once, with a reason | A `review.accepted.json` next to the config: a list of `{ "area", "check", "file", "reason", "date" }` (optional `"contains"` narrows it to one row of that file; a row found in several files, such as repeated text, is covered by naming any one of them). Matching rows move to an "Accepted earlier" table and stop counting. An entry that matches nothing is reported as stale. The kit never writes this file; you do. |
 | Know what did not run | `check.mjs` ends with a "Not run" list of areas with no config block, and its last line says how many areas did not run. `node <kit>/scripts/upgrade.mjs` shows the starter blocks that are missing; add `--write` to put them in `review.config.json` (the only thing the kit ever writes, config only, nothing gated). |
 | Fewer speed false positives | A `useNativeDriver: false` next to an `.addListener(` is accepted; a list over an ALL_CAPS constant or a written-out array is skipped; an `onSnapshot` that is returned is not "thrown away". |
 | Kit version labels (`kits`, in `release`, advisory) | Compares `kitVersions` in `package.json` with the kits pinned by commit (`codeload.github.com/<owner>/<repo>/tar.gz/<sha>`). Always: a pinned kit with no label, or a label with no pin. With `release.kitsOnline: true`: a label whose tag is missing or points to another commit, and a newer tag. `release.kitsRemote` changes the remote URL (`{owner}`, `{repo}`). An unreachable remote is a row, not a crash. |
@@ -253,4 +253,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.13.0 - 2026-11-15 9:10 AM CT
+Version 1.14.0 - 2026-11-15 1:40 PM CT
