@@ -44,7 +44,7 @@ const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
  * an environment variable named in docs), or the key's own name written as the value.
  */
 const isCodeOrLabel = (value, key) =>
-  /^[A-Za-z]+(?:[._:-]?[A-Za-z]+)*(?:\/[A-Za-z]+(?:[._:-][A-Za-z]+)*)+$/.test(value) || /^[A-Z][a-z]{7,11}$/.test(value) || /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/.test(value) || (!!key && squash(value) === squash(key));
+  /^[A-Za-z]+(?:[._:-][A-Za-z]+)*(?:\/[A-Za-z]+(?:[._:-][A-Za-z]+)*)+$/.test(value) || /^[A-Z][a-z]{7,11}$/.test(value) || /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/.test(value) || (!!key && squash(value) === squash(key));
 
 export function looksSecret(value, key = '') {
   if (value.length < 8 || /\s/.test(value)) return false;

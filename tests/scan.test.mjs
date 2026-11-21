@@ -21,7 +21,7 @@ test('secrets: .env files of every name, shell scripts and unquoted values are r
   const r = check({ '.env': 'STRIPE_SECRET=sk_live_abcdefghijklmnop1234\n', '.env.local': 'DB_PASSWORD=hunter2hunter2\n', 'deploy.sh': 'export TOKEN=ghp_abcdefghijklmnopqrstuvwxyz0123456789\n' });
   assert.equal(r.status, 1);
   assert.match(r.stdout, /FAIL {2}secrets scan \(3\)/);
-  for (const where of ['.env:1', '.env.local:1', 'deploy.sh:1']) assert.match(r.stdout, new RegExp(`\\] ${where.replace(/\./g, '\\.')}`));
+  for (const where of ['.env:1', '.env.local:1', 'deploy.sh:1']) assert.match(r.stdout, new RegExp(`\\] ${where.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}`));
   assert.doesNotMatch(r.stdout, /hunter2|sk_live_abc|ghp_abc/, 'the value is never printed');
 });
 
