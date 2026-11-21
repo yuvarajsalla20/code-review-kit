@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.15.0 - 2026-11-21
+Fixes from the 2026-11-21 review of the kit, plus three asks from the owner.
+- Secrets and banned patterns now reach the summary. `summary.mjs` runs the secrets scan and the `forbidden` rules itself (areas `secrets` and `forbidden`), and every hit is a must-fix row. Before, `check.mjs` failed on a leaked key while the summary said Ready. The review-summary skill now runs `check.mjs` first.
+- The secrets scan reads more and guesses less. It reads every `.env*` file, shell scripts, `.pem`, `.p8`, `.key`, `.plist`, `.xml`, `.properties` and `.gradle` files, JSON keys (`"password": "..."`) and unquoted `.env` values, and knows Stripe live keys, GitHub tokens and Slack tokens by their format. Error codes (`auth/weak-password`), labels (`Password`), plain words, URLs and patterns are no longer flagged. The value is never printed. The review's own reports (`review-out/`, `summary.*`) are not read.
+- A known false alarm can be accepted. `review.accepted.json` takes area `secrets` (the check is the kind of secret, `contains` the key name) and `forbidden` (the check is the rule's name). `skip` in `secrets` and in each forbidden rule takes paths such as `src/theme.ts` as well as names. Found on app-auth-kit (an error-code map and a label) and app-insights-kit (a CLI's own console output).
+- Forbidden rules take `skip`, `comments: false` (code only) and `files`. Comments are still read by default, because TODO/FIXME rules only ever match there. A bad pattern, or a secrets block with no `paths`, is one Config problem line instead of a stack trace; `secrets.paths` defaults to the project and `secrets.skip` to the usual build folders. A path that does not exist now stops the run (exit 2) instead of counting as a hit.
+- No check passes on nothing. A `roots` folder named in the config that does not exist, or roots with no source files, stop structure, tests, links and widgets. Before, roots `["src"]` on code in `lib/` passed a gated import loop. `check.mjs` prints how many files each area read.
+- Hand-off files are checked. Levels and results are read whatever their case (`high`, `FAIL`, `failed`, `error`); any other value stops the summary with the file and the row. A result is never assumed to be a pass.
+- `results` entries take `"kind": "probe"` for a reviewer's script that shows one bug. Probes are listed under "Bug checks by reviewers" and never count as a failed test run, so a probe that shows its bug no longer makes the verdict Not ready.
+- Unconfirmed rows say so. A new proof, `unverified` (with `confirm`: what would confirm it), shows "Not confirmed: ...". A missing or unknown proof is unverified; before, it read "Read in the code".
+- Dropped rows stay in the report under "Dropped by reviewers", with the reason from `dropReasons`. The code-review skill now drops only rows shown not real and marks the rest unverified.
+- `decide.mjs` writes entries that match again: the first file of a row found in several places, and `contains` without counts (the repeated value, the function's name). Before, such entries came back stale after a one-line edit.
+- Repeated text leaves out members of a string-literal union type; the typecheck already keeps those copies in step (`repeated.typedUnions: false` counts them again). Found on app-invite-kit.
+- New structure check `owned`, off until configured: an app that imports what one of its kits owns, such as `expo-sharing` or file writes outside app-export-kit, or Google sign-in outside app-auth-kit. `structure.owned: [{ kit, modules, names, allowIn }]`. Advisory unless gated.
+- Reviewers have Bash, which can write, so the read-only rule rests on trust. The agents check now says which reviewers have it, and the skills run the new `scripts/untouched.mjs` before and after the reviewers to show nothing in the project changed.
+- `summary.mjs` exits 3 for Incomplete, as `check.mjs` does (it exited 0). Fix-first rows no longer show a double period. Email attachments outside the project, `.env` files and the addresses file are refused, and a missing git no longer crashes the email step.
+- 26 new tests (154 in all).
+
 ## 1.14.0 - 2026-11-15
 - `structure` repeated text: code between two short strings (`'row', alignItems: 'center'`, or `x="a" accessibilityLabel="b"`) is no longer read as text. Every string is now matched whole, short ones too, so a match can no longer start at a closing quote. Found on HringNring, where five of the sixteen repeated-text rows were style keys or JSX attribute names.
 - `structure` repeated text: style and platform words (`space-between`, `flex-start`, `transparent`, Alert's `destructive` and the like) never count. They are the same everywhere by design.
