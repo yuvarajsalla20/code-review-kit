@@ -103,6 +103,7 @@ Added in 1.4.0. Set up with a `structure` block in `review.config.json` (a ready
 | `cycles` | Files that import each other in a loop (type-only imports are ignored unless `includeTypeOnlyCycles` is true) | Gate |
 | `layers` | An import from one layer into a layer it may not use, per your `layers` map (`mayImport`) | Gate |
 | `restricted` | A package imported outside its allowed place, e.g. `firebase` only inside `src/data` | Gate |
+| `owned` | The app imports a package one of its shared kits owns, e.g. `expo-sharing` outside `app-export-kit` (1.15.0). Off until `owned` lists rules | Review |
 | `duplicates` | `minLines` or more meaningful lines (and `minChars` characters) repeated in two or more places; imports and bracket-only lines do not count | Review |
 | `repeated` | The same list of four or more numbers or words written twice or more, or the same text of ten or more characters in `minFiles` files. Style and platform words such as `space-between`, `transparent` or `destructive` never count. `extra` adds files such as `firestore.rules` | Review |
 | `size` | Files over `maxFileLines`, top-level functions over `maxFunctionLines` | Review |
@@ -117,6 +118,7 @@ Added in 1.4.0. Set up with a `structure` block in `review.config.json` (a ready
 | `aliases` | Import prefixes, e.g. `{"@/": "src/"}` | `{}` |
 | `layers` | `[{ name, paths, mayImport }]`; the longest matching path wins; files in no layer are skipped | none, so layer rules are not checked |
 | `restricted` | `[{ module, onlyIn }]` | none |
+| `owned` | `[{ kit, modules, names, allowIn }]`: `modules` the kit owns; `names` (optional) only those exports count, such as `["writeAsStringAsync"]` for file writes; `allowIn` (optional) app files that may still use them | none, so the check is off |
 | `gate` | Checks that fail the run | `["cycles","layers","restricted"]` |
 
 The scripts count; the `structure-review` skill starts the `structure-reviewer` agent, which opens every row, drops what is not real, writes the concrete fix and hands over one table with a **Your decision** column. Fix only after that.
@@ -188,6 +190,25 @@ node <kit>/scripts/email.mjs --summary summary.json --to all --out review-out/em
 
 `--check` confirms the setup and lists the allowed addresses. The prepared file holds `to`, `subject`, `body`, `htmlBody` and the `attachments` paths. The `code-review` and `review-summary` skills do all of this at the end of a review, following "Emailing the report" in `rules/review-rules.md`.
 
+## Added in 1.15.0
+
+| What | How |
+|---|---|
+| Secrets and banned patterns reach the summary | `summary.mjs` runs the secrets scan and the `forbidden` rules itself, as the areas `secrets` and `forbidden`. Every hit is a must-fix row, so a leaked key makes the verdict Not ready. The value is never printed. |
+| A wider secrets scan | Reads every `.env*` file, shell scripts, `.pem`, `.p8`, `.key`, `.plist`, `.xml`, `.properties` and `.gradle` files. Finds JSON keys (`"password": "..."`), unquoted values in `.env` files, and Stripe live keys, GitHub tokens and Slack tokens by their format. Error codes (`auth/weak-password`), short labels (`Password`), setting names, a value equal to its key's name and URLs are no longer flagged; other letters-only values still count. `secrets.paths` defaults to `["."]` and `secrets.skip` to the usual build folders. |
+| Accept a secret or a banned line | In `review.accepted.json`, area `secrets` (checks `assignment`, `awsKey`, `stripeKey`, `githubToken`, `slackToken`, `privateKey`, `serviceAccount`) or `forbidden` (the check is the rule's name), with the file and an optional `contains` (for a secret, the key name). `skip` in `secrets` and in each forbidden rule takes paths (`src/theme.ts`, `src/generated/`) as well as names. |
+| Forbidden rules | Each rule takes `skip`, `comments: false` (read code only, so a commented-out `console.log` does not count; the default keeps comments, because TODO/FIXME rules only match there) and `files` (a pattern for which files to read). A bad pattern is one Config problem line. |
+| No check passes on nothing | A `roots` folder you named that does not exist, or roots with no source files, stop structure, tests, links and widgets with a Config problem (exit 2). `check.mjs` prints how many files each area read. |
+| Hand-off files are checked | Levels and results are read whatever their case (`high`, `FAIL`, `failed`, `error`); anything else stops the summary, naming the file and the row. A result is never assumed to be a pass. |
+| Probes are not test runs | A results entry with `"kind": "probe"` is a reviewer's script that shows one bug. It is listed under "Bug checks by reviewers" and never makes the verdict Not ready. |
+| Unconfirmed rows say so | Proof `unverified` (with `confirm`: what would confirm it) shows "Not confirmed: ...". A missing or unknown proof is unverified, never "Read in the code". |
+| Dropped rows stay visible | Rows in `drop` are listed under "Dropped by reviewers" with the reason from `dropReasons`. Drop only rows shown not real. |
+| Accepts that stick | `decide.mjs` names the first file of a row found in several places, and writes `contains` without counts (the repeated value, the function's name), so an accepted row stays accepted after the code grows. |
+| Typed unions are not repeated text | A value that is a member of a string-literal union type is left out of `repeated`; the typecheck keeps its copies in step (`repeated.typedUnions: false` counts them again). |
+| Exit codes | `summary.mjs` exits 1 for Not ready, 3 for Incomplete (as `check.mjs` does), 2 for a config or hand-off file problem. |
+| Reviewers changed nothing | Reviewer agents have Bash, which can write. `untouched.mjs --save` before they start and `--compare` after shows any changed file. The agents check notes which reviewers have Bash on trust. |
+| Safer email attachments | `email.attach` refuses paths outside the project, `.env` files and the addresses file. A missing git no longer crashes the email step. |
+
 ## Added in 1.12.0
 
 Learned from a full review of a shipping app (HringNring, Nov 15 2026): every script passed, while the real bugs came from the reviewer agents and from tests built by hand. These close that gap.
@@ -253,4 +274,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
 ---
-Version 1.14.0 - 2026-11-15 1:40 PM CT
+Version 1.15.0 - 2026-11-21

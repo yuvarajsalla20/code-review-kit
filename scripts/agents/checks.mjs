@@ -5,8 +5,14 @@ import { join } from 'node:path';
 const SUPPORTED = ['name', 'description', 'model', 'effort', 'maxTurns', 'tools', 'disallowedTools', 'skills', 'memory', 'background', 'omitClaudeMd', 'isolation', 'color', 'experimental'];
 const IGNORED = ['permissionMode', 'hooks', 'mcpServers', 'initialPrompt'];
 const SHARED = /rules\/review-rules\.md/;
-/** The tools a reviewer may have. Anything else (Edit, Write, NotebookEdit, MultiEdit, a new write-capable tool) is flagged. */
+/**
+ * The tools a reviewer may have. Anything else (Edit, Write, NotebookEdit, MultiEdit, a new write-capable tool) is flagged.
+ * Bash is on the list on trust: it can write, and only the agent's wording keeps it to read-only commands. `bashOnTrust` names
+ * those agents so the report says so, and the skills check the project is untouched afterwards (scripts/untouched.mjs).
+ */
 export const READ_ONLY_TOOLS = ['Read', 'Grep', 'Glob', 'Bash', 'LS', 'WebFetch', 'WebSearch'];
+
+export const bashOnTrust = (agents) => agents.filter((a) => a.tools.includes('Bash')).map((a) => a.file);
 
 const row = (where, what, fix, effort = 'small', places = []) => ({ where, what, fix, effort, places });
 /** One row for a problem several agents share, so the owner decides once. */

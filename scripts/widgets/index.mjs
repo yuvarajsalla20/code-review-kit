@@ -2,7 +2,7 @@
 // iOS never wakes the app to ask for more; the widget repeats what it was given. Text matches, so every row is a candidate the reviewer opens.
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SOURCE, listFiles, readText } from '../lib/files.mjs';
+import { SOURCE, checkedFiles, readText } from '../lib/files.mjs';
 import { assemble } from '../lib/findings.mjs';
 import { lineFinder, stripComments } from '../lib/source.mjs';
 
@@ -47,7 +47,7 @@ export const usesWidgets = (root) => {
 
 export function runWidgets(config, root) {
   const s = { ...DEFAULTS, ...config.widgets };
-  const files = listFiles(root, s.roots, { ignore: s.ignore, match: SOURCE });
+  const files = checkedFiles(root, s.roots, { label: 'widgets.roots', configured: config.widgets?.roots !== undefined, ignore: s.ignore, match: SOURCE });
   const lockscreen = [];
   const timeline = [];
   for (const file of files) {

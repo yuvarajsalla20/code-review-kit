@@ -75,8 +75,14 @@ test('summary.mjs writes the page and report and exits 1 when something must be 
   assert.equal(r.status, 1);
   assert.ok(existsSync(join(root, 'p.html')) && existsSync(join(root, 's.md')));
   assert.match(readFileSync(join(root, 's.md'), 'utf8'), /\*\*Not ready\*\*/);
-  const clean = project({ 'src/a.ts': 'export const a = 1;\n', 'review.config.json': { name: 'ok', structure: { roots: ['src'], layers: [] } } });
+  const skipRest = { skipAreas: Object.fromEntries(['release', 'tests', 'speed', 'links', 'widgets'].map((a) => [a, 'not part of this test'])) };
+  const clean = project({ 'src/a.ts': 'export const a = 1;\n', 'review.config.json': { name: 'ok', structure: { roots: ['src'], layers: [] }, ...skipRest } });
   assert.equal(spawnSync('node', [join(kit, 'scripts/summary.mjs')], { cwd: clean, encoding: 'utf8' }).status, 0);
+  // Incomplete exits 3, as check.mjs does (1.14.0 exited 0, so a script trusting the exit code passed a partial review).
+  const partial = project({ 'src/a.ts': 'export const a = 1;\n', 'review.config.json': { name: 'ok', structure: { roots: ['src'], layers: [] } } });
+  const p = spawnSync('node', [join(kit, 'scripts/summary.mjs')], { cwd: partial, encoding: 'utf8' });
+  assert.equal(p.status, 3);
+  assert.match(p.stdout, /\*\*Incomplete\*\*/);
 });
 
 test('the kit summarises its own agents with --areas and no config', () => {

@@ -5,6 +5,7 @@ export const TITLES = {
   cycles: 'Circular imports',
   layers: 'Layer rules',
   restricted: 'Packages used outside their place',
+  owned: 'Packages a shared kit owns',
   duplicates: 'Duplicate code',
   repeated: 'Repeated lists and text',
   size: 'Size',

@@ -1,4 +1,5 @@
 // The wording of each finding: what is wrong, how to fix it, how big the job is. One function per kind of finding.
+// `subject` is the part of `what` that names the thing and has no counts in it, so an accepted entry's `contains` still matches after the code grows.
 
 const effortForLines = (n) => (n < 12 ? 'small' : n < 40 ? 'medium' : 'large');
 const spot = (p) => (p.to && p.to !== p.from ? `${p.file}:${p.from}-${p.to}` : `${p.file}:${p.from ?? p.line}`);
@@ -8,6 +9,7 @@ const at = (file, line) => [{ file, from: line }];
 export const cycle = (c) => ({
   where: c.files[0],
   what: `${c.files.length} files import each other in a loop: ${c.loop.join(' → ')}`,
+  subject: c.loop.join(' → '),
   fix: 'Move what both sides need into a third file that neither of them imports from, or pass the value in instead of importing it.',
   effort: c.files.length > 3 ? 'large' : 'medium',
   places: c.files.map((file) => ({ file, from: 1 })),
@@ -16,6 +18,7 @@ export const cycle = (c) => ({
 export const layer = (p) => ({
   where: `${p.file}:${p.line}`,
   what: `${p.fromLayer} imports ${p.to} (${p.toLayer}), which ${p.fromLayer} may not use`,
+  subject: `imports ${p.to}`,
   fix: `Move the shared part into a layer that ${p.fromLayer} may import, or route the call through the layer that owns it.`,
   effort: 'small',
   places: at(p.file, p.line),
@@ -24,7 +27,17 @@ export const layer = (p) => ({
 export const restricted = (p) => ({
   where: `${p.file}:${p.line}`,
   what: `"${p.module}" is imported outside ${p.onlyIn.join(', ')}`,
+  subject: `"${p.module}"`,
   fix: `Call it through ${p.onlyIn[0]} instead of importing it here.`,
+  effort: 'small',
+  places: at(p.file, p.line),
+});
+
+export const owned = (p) => ({
+  where: `${p.file}:${p.line}`,
+  what: `${p.names.length ? `${p.names.join(', ')} from "${p.module}"` : `"${p.module}"`} is used here, but ${p.kit} owns it`,
+  subject: `"${p.module}"`,
+  fix: `Call ${p.kit} for this instead, so its fixes reach the app. If the kit cannot do it yet, add it to the kit, or list this file under the rule's allowIn with the reason.`,
   effort: 'small',
   places: at(p.file, p.line),
 });
@@ -40,6 +53,7 @@ export const duplicate = (d) => ({
 export const repeated = (r) => ({
   where: r.places.map(spot).join(' | '),
   what: `${r.kind === 'list' ? 'The same list' : 'The same text'} ${short(r.value)} is written out in ${r.places.length} places`,
+  subject: short(r.value),
   fix: 'Define it once in a shared constants file and import it. Where one copy cannot import (rules files), add a test that checks both match.',
   effort: 'small',
   places: r.places.map((p) => ({ file: p.file, from: p.line })),
@@ -56,6 +70,7 @@ export const bigFile = (f) => ({
 export const bigFunction = (f) => ({
   where: `${f.file}:${f.from}-${f.to}`,
   what: `${f.name} has ${f.lines} lines (limit ${f.limit})`,
+  subject: `${f.name} has`,
   fix: 'Pull steps out into named helpers so each function does one thing.',
   effort: 'medium',
   places: [{ file: f.file, from: f.from, to: f.to }],

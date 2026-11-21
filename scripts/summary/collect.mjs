@@ -7,7 +7,8 @@ export function collect(config, root, areas) {
   const known = AREAS.map((a) => a.key);
   const unknown = (areas ?? []).filter((a) => !known.includes(a));
   if (unknown.length) throw new ConfigError(`Unknown area${unknown.length > 1 ? 's' : ''}: ${unknown.join(', ')}. The areas are: ${known.join(', ')}.`);
-  const chosen = AREAS.filter((a) => (areas?.length ? areas.includes(a.key) : config[a.key] && !a.slow));
-  if (!chosen.length) throw new ConfigError(`No checks to run. Add a ${known.join(', ')} block to review.config.json, or pass --areas.`);
+  const chosen = AREAS.filter((a) => (areas?.length ? areas.includes(a.key) : (config[a.key] || a.always) && !a.slow));
+  // The secrets scan always runs, but on its own it is not a review of the code.
+  if (!chosen.length || (!areas?.length && !chosen.some((a) => !a.always))) throw new ConfigError(`No checks to run. Add a ${AREAS.filter((a) => !a.always).map((a) => a.key).join(', ')} block to review.config.json, or pass --areas.`);
   return chosen.map((a) => ({ area: a.key, result: a.run(config, root) }));
 }

@@ -51,11 +51,11 @@ test('each secret pattern fails the run', () => {
 
 test('a typo in a configured path or gate name stops the run instead of switching a check off', () => {
   const typoPath = run({ 'src/a.ts': 'export const a = 1;' }, cfg({ forbidden: [{ name: 'log', pattern: 'x', paths: ['scr'] }] }));
-  assert.equal(typoPath.status, 1);
-  assert.match(typoPath.stdout, /path not found: scr/);
+  assert.equal(typoPath.status, 2);
+  assert.match(typoPath.stderr, /Config problem: forbidden rule "log": path not found: scr/);
   const typoSecrets = run({ 'src/a.ts': 'x' }, cfg({ secrets: { paths: ['scr'], skip: [] } }));
-  assert.equal(typoSecrets.status, 1);
-  assert.match(typoSecrets.stdout, /path not found: scr/);
+  assert.equal(typoSecrets.status, 2);
+  assert.match(typoSecrets.stderr, /Config problem: secrets\.paths: path not found: scr/);
   const typoGate = run({ 'src/a.ts': "import './a';" }, cfg({ structure: { roots: ['src'], gate: ['cycle'] } }));
   assert.equal(typoGate.status, 2);
   assert.match(typoGate.stderr, /Unknown gate name: cycle/);

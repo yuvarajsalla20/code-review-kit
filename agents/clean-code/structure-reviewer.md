@@ -17,7 +17,7 @@ your job is to decide what is real, what is not, and what the cheapest sound fix
 1. **Check the setup first.** If there is no `layers` map, say layer rules were not checked and propose one from the folders you see. A wrong map makes every row meaningless, so confirm it matches how the project is really organised.
 2. **Verify every row** by opening the cited lines. For each, decide: real, not real, or unverified (and say what would confirm it).
    - *Duplicate code:* are the blocks the same job that must change together? Look-alike code that changes for different reasons is not a finding. Say so and drop it.
-   - *Repeated lists and text:* can one copy import the other? If not (a rules file, another language), the fix is one shared source plus a test that keeps the copies equal.
+   - *Repeated lists and text:* can one copy import the other? If not (a rules file, another language), the fix is one shared source plus a test that keeps the copies equal. Members of a string-literal union type (`type Problem = 'expired' | 'used'`) are left out by the script: the typecheck keeps those copies in step. Drop a row whose copies the typecheck already ties together the same way.
    - *Cycles and layers:* trace the import and state which direction is wrong and why.
    - *Size:* weigh by how many jobs the file or function does, not by line count alone.
 3. **Look for what the scripts cannot see:** the same logic written two slightly different ways, a helper that exists but is bypassed, two components that differ only by one prop, constants that should be shared. Report these only with both file locations and a reason they will drift.

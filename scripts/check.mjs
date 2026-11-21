@@ -3,25 +3,17 @@
 //   node path/to/review-kit/scripts/check.mjs [path/to/review.config.json] [--results results.json]
 // Exit code 1 if any command fails, any forbidden or secret match is found, or a gated check finds something.
 // Exit code 3 (Incomplete) when everything that ran passed but an area that applies has no config block and is not in `skipAreas`.
-import { readFileSync, statSync, existsSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
-import { join, relative } from 'node:path';
 import { AREAS, coverage } from './areas.mjs';
 import { guard, loadConfig, parseArgs } from './lib/cli.mjs';
-import { walk } from './lib/files.mjs';
-import { printSection } from './lib/section.mjs';
+import { printSection, printStale } from './lib/section.mjs';
 
 const root = process.cwd();
 const args = parseArgs();
 const config = loadConfig(root, args.configPath);
 /** The commands' outcomes, written with --results file.json in the shape summary.mjs --extra reads, so the summary shows them. */
 const ran = [];
-const SECRET_PATTERNS = [
-  ['private key block', /-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----/],
-  ['service account key', /"private_key"\s*:/],
-  ['AWS access key', /AKIA[0-9A-Z]{16}/],
-  ['generic secret assignment', /(secret|password|passwd|token)\s*[:=]\s*['"][^'"\s]{8,}['"]/i],
-];
 
 const results = [];
 const fail = (section, line) => results.push({ section, line });
@@ -43,50 +35,29 @@ for (const { name, run } of config.commands || []) {
   }
 }
 
-// 2. Forbidden patterns
+// 2 and 3. The banned patterns and the secrets scan: the same areas summary.mjs runs, so both read the same rows
+// and an accepted false alarm (review.accepted.json, area "secrets" or "forbidden") stops counting in both.
+const areaOf = (key) => AREAS.find((a) => a.key === key);
+const forbidden = guard(() => areaOf('forbidden').run(config, root));
 console.log('\n== Forbidden patterns ==');
-for (const rule of config.forbidden || []) {
-  const re = new RegExp(rule.pattern);
-  let hits = 0;
-  for (const base of rule.paths || ['.']) {
-    const start = join(root, base);
-    if (!existsSync(start)) {
-      fail(`forbidden:${rule.name}`, `path not found: ${base} (check the spelling in review.config.json)`);
-      hits++;
-      continue;
-    }
-    const files = statSync(start).isDirectory() ? walk(start, ['node_modules', '.git']) : [start];
-    for (const file of files) {
-      readFileSync(file, 'utf8').split('\n').forEach((text, i) => {
-        if (re.test(text)) { hits++; fail(`forbidden:${rule.name}`, `${relative(root, file)}:${i + 1}  ${text.trim().slice(0, 100)}`); }
-      });
-    }
-  }
-  console.log(`${hits ? 'FAIL' : 'PASS'}  ${rule.name}${hits ? ` (${hits})` : ''}`);
+for (const name of forbidden.gate) {
+  const rows = forbidden.findings.filter((f) => f.check === name);
+  const accepted = forbidden.accepted.filter((f) => f.check === name).length;
+  console.log(`${rows.length ? 'FAIL' : 'PASS'}  ${name}${rows.length ? ` (${rows.length})` : ''}${accepted ? ` (${accepted} accepted)` : ''}`);
+  for (const f of rows) fail(`forbidden:${name}`, `${f.where}  ${f.what}`);
 }
+printStale(forbidden);
 
-// 3. Secrets
+const secrets = guard(() => areaOf('secrets').run(config, root));
 console.log('\n== Secrets ==');
-let secretHits = 0;
-const secretCfg = config.secrets || { paths: ['.'], skip: ['node_modules', '.git'] };
-for (const base of secretCfg.paths) {
-  if (!existsSync(join(root, base))) {
-    fail('secret:path', `path not found: ${base} (check secrets.paths in review.config.json)`);
-    secretHits++;
-    continue;
-  }
-  for (const file of walk(join(root, base), secretCfg.skip || [])) {
-    readFileSync(file, 'utf8').split('\n').forEach((text, i) => {
-      for (const [label, re] of SECRET_PATTERNS) {
-        if (re.test(text)) { secretHits++; fail(`secret:${label}`, `${relative(root, file)}:${i + 1}`); }
-      }
-    });
-  }
-}
-console.log(`${secretHits ? 'FAIL' : 'PASS'}  secrets scan${secretHits ? ` (${secretHits})` : ''}`);
+console.log(`Read ${secrets.files} files.`);
+console.log(`${secrets.findings.length ? 'FAIL' : 'PASS'}  secrets scan${secrets.findings.length ? ` (${secrets.findings.length})` : ''}${secrets.accepted.length ? ` (${secrets.accepted.length} accepted)` : ''}`);
+// The value itself is never printed: the output may be pasted or emailed.
+for (const f of secrets.findings) fail(`secret:${f.what}`, f.where);
+printStale(secrets);
 
 // 4. The script-based areas: structure, release, tests, agents (each when the config has its block)
-for (const area of AREAS.filter((a) => config[a.key] && !a.slow)) {
+for (const area of AREAS.filter((a) => config[a.key] && !a.slow && !a.always)) {
   printSection(area.title, area.checks, guard(() => area.run(config, root)), fail, `Review items are not failures: run scripts/${area.script} --report to get the table for the owner.`);
 }
 
@@ -105,6 +76,7 @@ if (notRun.length) {
 
 if (args.results) {
   writeFileSync(args.results, `${JSON.stringify({ results: ran }, null, 2)}\n`);
+  // Secret and forbidden hits are not copied here: summary.mjs runs the same scans itself, so they would count twice.
   console.log(`\nCommand results written to ${args.results} (pass it to summary.mjs with --extra).`);
 }
 

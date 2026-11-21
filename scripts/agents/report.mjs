@@ -14,6 +14,7 @@ export const toMarkdown = (project, kitVersion, date, result) =>
   [
     ...header('Agent review', project, kitVersion, date, `   Agents: ${result.agents}   Skills read: ${result.skills}`),
     ...summaryTable(TITLES, result),
+    ...(result.notes?.length ? ['## Allowed on trust', '', ...result.notes.map((n) => `- ${n}`), ''] : []),
     ...decisionSections(TITLES, result.findings),
     ...acceptedSection(result),
     ...couldNotVerify([

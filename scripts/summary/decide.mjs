@@ -1,5 +1,5 @@
 // The owner's marks in the "Your decision" column, read back. Pure: no files.
-import { fileOf } from '../lib/accepted.mjs';
+import { filesOf } from '../lib/accepted.mjs';
 
 const cells = (line) => line.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map((c) => c.trim());
 
@@ -22,6 +22,13 @@ export function readMarks(markdown) {
   return marks;
 }
 
+/**
+ * The text an accepted entry matches on: the row's `subject` (the repeated value, the function's name), or its text when that has no
+ * numbers in it. Counts ("120 lines", "in 3 places") are left out, so the entry still matches after a one-line edit. Nothing when neither fits:
+ * the entry then covers that check in that file.
+ */
+export const containsFor = (row) => row.subject || (row.technical && !/\d/.test(row.technical) ? row.technical.slice(0, 60) : '');
+
 /** Splits the marks into fix, later and accepted, and builds the accepted-file entries. A mark that is not understood is a problem, never a guess. */
 export function decide(markdown, model, date) {
   const byN = new Map((model.rows ?? []).map((r) => [r.n, r]));
@@ -35,7 +42,8 @@ export function decide(markdown, model, date) {
     if (kind !== 'accept') { out[kind].push(row); continue; }
     if (!m[2].trim()) { out.problems.push(`#${n}: an accept needs a reason ("accept: only wiring, nothing to test")`); continue; }
     if (row.check === 'agent') { out.acceptedByAgent.push(row); continue; }
-    out.entries.push({ area: row.area, check: row.check, file: fileOf(row.where), reason: m[2].trim(), date, ...(row.technical ? { contains: row.technical.slice(0, 60) } : {}) });
+    const contains = containsFor(row);
+    out.entries.push({ area: row.area, check: row.check, file: filesOf(row.where)[0], reason: m[2].trim(), date, ...(contains ? { contains } : {}) });
   }
   return out;
 }

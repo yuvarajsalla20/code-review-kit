@@ -27,7 +27,7 @@ ${section(s.results.title, `<p class="note">${esc(s.results.note)}</p>${table(s.
 ${section(s.fixFirst.title, table(s.fixFirst))}
 ${section(s.decisions.title, `<p class="note">${esc(s.decisions.note)}</p>${table(s.decisions)}`)}
 ${section('By area', s.areas.map((a) => `<h3>${esc(a.title)}</h3>${table(a)}`).join(''))}
-${[s.fixed, s.accepted, s.stale].filter((x) => x.rows.length).map((x) => section(x.title, `<p class="note">${esc(x.note)}</p>${table(x)}`)).join('')}
+${[s.probes, s.dropped, s.fixed, s.accepted, s.stale].filter((x) => x.rows.length).map((x) => section(x.title, `<p class="note">${esc(x.note)}</p>${table(x)}`)).join('')}
 ${section(s.terms.title, table(s.terms))}
 ${section('What we could not check', `<ul>${m.couldNot.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`)}
 </main><footer>${esc(m.footer)}</footer></body></html>`;

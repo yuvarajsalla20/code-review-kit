@@ -124,7 +124,7 @@ test('summary: rows carry their proof, results are shown, and the markdown and p
   assert.match(md, /\| load \| Fail \|/);
   assert.match(md, /Needs a device to confirm/);
   assert.match(toHtml(m), /Script match, not yet opened/);
-  assert.equal(buildModel(script([]), { add: [{ area: 'x', where: 'w', severity: 'Low', proof: 'bogus' }] }).rows[0].proof, 'code', 'an unknown proof is treated as read in the code');
+  assert.equal(buildModel(script([]), { add: [{ area: 'x', where: 'w', severity: 'Low', proof: 'bogus' }] }).rows[0].proof, 'unverified', 'an unknown proof is not confirmed, never "read in the code"');
 });
 
 test('summary: --previous marks rows New or Still open (line numbers ignored) and lists what was fixed', () => {
