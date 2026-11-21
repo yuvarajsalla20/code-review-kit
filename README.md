@@ -273,5 +273,9 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 - Anything that cannot be checked (real device, live backend) is listed, not guessed.
 - Project-specific facts live only in `review.config.json`. To cover a new stack, add a checklist.
 
+## Writing rule
+
+Every word this tool shows, and every line of its documentation, follows the shared [Writing rule](https://github.com/yuvarajsalla20/app-settings-kit#writing-rule-every-word-is-professional): Title Case for titles, rows and buttons; calm, complete sentences for captions and messages; "e.g.," for examples; no chatty fragments, slang or exclamation marks. Its reports and messages are written in the same voice.
+
 ---
 Version 1.15.0 - 2026-11-21
