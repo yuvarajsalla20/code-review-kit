@@ -33,13 +33,22 @@ const REGEX_LIKE = /\.[*+]|\\[dwsb]/;
 const PLACEHOLDER = /\$\x7b|^<.*>$|^\x7b\x7b.*\x7d\x7d$|^process\.env\b/;
 
 /**
- * Whether a value looks like a real secret rather than a word, a code or a placeholder. Error codes (`auth/weak-password`),
- * labels (`Password`), plain words, URLs without a login, `${...}` templates, patterns (`.*[Pp]assword.*`) and runs of one character are not.
- * A value must be 8 or more characters with letters and a digit or symbol, or 16 or more digits.
+ * Whether a value looks like a real secret rather than a code, a label or a placeholder. Not secrets: error codes (letters split
+ * by `/`, such as `auth/weak-password`), a short capitalised label (`Password`), the key's own name (`password: 'password'`),
+ * URLs without a login, `${...}` templates, patterns (`.*[Pp]assword.*`) and runs of one character. Any other value of 8 or more
+ * characters counts, letters-only ones too (`supersecretpassword`, `CorrectHorseBatteryStaple`); all digits needs 16 or more.
  */
-export function looksSecret(value) {
+const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+/**
+ * An error code (`auth/weak-password`), a short label (`Password`, `Passphrase`), the name of a setting (`FIREBASE_SERVICE_ACCOUNT`,
+ * an environment variable named in docs), or the key's own name written as the value.
+ */
+const isCodeOrLabel = (value, key) =>
+  /^[A-Za-z]+(?:[._:-]?[A-Za-z]+)*(?:\/[A-Za-z]+(?:[._:-][A-Za-z]+)*)+$/.test(value) || /^[A-Z][a-z]{7,11}$/.test(value) || /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/.test(value) || (!!key && squash(value) === squash(key));
+
+export function looksSecret(value, key = '') {
   if (value.length < 8 || /\s/.test(value)) return false;
-  if (/^[A-Za-z]+(?:[/._:-][A-Za-z]+)*$/.test(value)) return false;
+  if (isCodeOrLabel(value, key)) return false;
   if (/^[a-z][a-z0-9+.-]*:\/\/[^@]*$/i.test(value)) return false;
   if (PLACEHOLDER.test(value) || REGEX_LIKE.test(value)) return false;
   if (/^(.)\1+$/.test(value)) return false;
@@ -60,8 +69,10 @@ export function secretsInLine(text, { bare = false } = {}) {
   const hits = PROVIDER.filter(([, , re]) => re.test(text)).map(([check]) => ({ check }));
   if (hits.length) return hits;
   for (const m of text.matchAll(ASSIGNMENT)) {
+    // `cond ? 'newPassword' : 'password'` is a choice between two strings, not a key and its value.
+    if (/\?\s*["'`]?$/.test(text.slice(0, m.index))) continue;
     const value = m[3] ?? (bare ? m[4] : undefined);
-    if (value !== undefined && looksSecret(value)) return [{ check: 'assignment', key: m[1] }];
+    if (value !== undefined && looksSecret(value, m[1])) return [{ check: 'assignment', key: m[1] }];
   }
   return [];
 }

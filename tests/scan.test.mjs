@@ -56,8 +56,20 @@ test('secrets: error codes, labels, words, URLs and placeholders are not secrets
   // app-auth-kit src/supabase/errors.ts:10 and src/theme.ts:95: both flagged in 1.14.0.
   assert.deepEqual(secretsInLine("  weak_password: 'auth/weak-password',"), []);
   assert.deepEqual(secretsInLine("  password: 'Password',"), []);
-  for (const v of ['.*[Pp]assword.*', 'auth/weak-password', 'Password', 'realpassword', 'PASSWORD_RESET', 'https://oauth2.googleapis.com/token', '${process.env.TOKEN}', '********', 'xxxxxxxxxx', 'short1']) assert.equal(looksSecret(v), false, v);
+  for (const v of ['.*[Pp]assword.*', 'auth/weak-password', 'Password', 'Passphrase', 'PASSWORD_RESET', 'FIREBASE_SERVICE_ACCOUNT', 'https://oauth2.googleapis.com/token', '${process.env.TOKEN}', '********', 'xxxxxxxxxx', 'short1']) assert.equal(looksSecret(v), false, v);
+  assert.equal(looksSecret('password_reset', 'PASSWORD_RESET'), false, "the key's own name is not a secret");
   for (const v of ['hunter2hunter2', 'realpassword123', 'abcdefgh12345678', 'aB3/xY9+zQ1=', 'https://user:pa55@db.example.com']) assert.equal(looksSecret(v), true, v);
+});
+
+test('secrets: letters-only values still count unless they look like a code or label (1.14.0 caught these)', () => {
+  assert.deepEqual(secretsInLine("password: 'supersecretpassword'"), [{ check: 'assignment', key: 'password' }]);
+  assert.deepEqual(secretsInLine('DB_PASSWORD = "CorrectHorseBatteryStaple"'), [{ check: 'assignment', key: 'DB_PASSWORD' }]);
+  assert.deepEqual(secretsInLine('secret = "abc-def-ghi-jkl"'), [{ check: 'assignment', key: 'secret' }]);
+  for (const v of ['realpassword', 'correct.horse.battery']) assert.equal(looksSecret(v), true, v);
+  assert.deepEqual(secretsInLine("password: 'password'"), []);
+  // app-auth-kit AuthFields.tsx: a ternary between two strings is not a key and value.
+  assert.deepEqual(secretsInLine("textContentType={signingUp ? 'newPassword' : 'password'}"), []);
+  assert.deepEqual(secretsInLine("autoComplete={signingUp ? 'new-password' : 'current-password'}"), []);
 });
 
 test('secrets: skip takes paths from the project root as well as names', () => {
