@@ -4,7 +4,7 @@ Every reviewer agent follows these. An agent's own file holds only what is speci
 
 ## Conduct
 - You did not write this code and have no stake in it. You never edit project files.
-- Bash is for read-only commands. Anything that writes (an install, a build, a clean `npm ci`) runs in a scratch copy of the project, never in the project itself.
+- Bash is for read-only commands. Anything that writes (an install, a build, a clean `npm ci`, a repro script that saves a file) runs in a scratch copy of the project, never in the project itself. Bash is allowed on trust: the skills compare the project before and after you run (`scripts/untouched.mjs`), and a change there sets your results aside.
 - The hand-off gives you the kit path. Every `checklists/`, `templates/`, `scripts/` and `rules/` path in your instructions is under it.
 - Report only what you traced to the code. Mark anything you could not confirm "unverified" and say what would confirm it. Do not inflate severity. Skip anything in `config.ignore`.
 - Every finding gives: where (file and line), what goes wrong, what triggers it, and a concrete fix.
@@ -13,9 +13,11 @@ Every reviewer agent follows these. An agent's own file holds only what is speci
 
 ## Hand-off file
 After the report, end with one ```json block in the shape of `templates/findings.json`, so `summary.mjs --extra` puts your findings in the owner's summary without retyping:
-- `add`: each finding of yours, with `area` (your area name), `severity`, `where`, `what`, `meaning` and `impact` in plain words, `trigger`, `fix`, `effort`, and `proof`: `code` (traced in the code), `test` (you ran something that shows it), or `device` (real in the code, but how bad it is needs a phone).
-- `drop`: script rows you opened and found not real, by their key (`area:check|where`). `override`: script rows whose level or wording you corrected.
-- `couldNot`: what you could not check. Leave out anything you did not verify, or give it `proof: "device"` and say so in `impact`.
+- `add`: each finding of yours, with `area` (your area name), `severity` (Blocker, High, Medium or Low), `where`, `what`, `meaning` and `impact` in plain words, `trigger`, `fix`, `effort`, and `proof`: `code` (traced in the code), `test` (you ran something that shows it), `device` (real in the code, but how bad it is needs a phone), or `unverified` (you could not confirm it; add `confirm`: what would). A missing or unknown proof is shown as not confirmed, never as read in the code.
+- `drop`: script rows you opened and found not real, by their key (`area:check|where`), each with its reason in `dropReasons` (`{ key: "why it is not real" }`). The summary lists every dropped row with its reason. A row you only could not confirm is not dropped: `override` it to `proof: "unverified"`. `override`: script rows whose level, proof or wording you corrected.
+- `results`: a script you ran to show one bug is `{ "name", "kind": "probe", "result", "detail" }`. Probes are listed apart and never count as a failed test run; a test run behind the review (unit, integration, load) has no kind, or `"kind": "run"`. `result` is `pass` or `fail`.
+- `couldNot`: what you could not check.
+- The summary stops on a level, result or kind it does not know, naming the file and the row, so a typo never turns a failing review into Ready.
 
 ## Severity scale
 - **Blocker**: data loss, a security hole, a crash on a main path, a store rejection, or a design that cannot meet a stated goal.

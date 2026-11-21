@@ -43,6 +43,7 @@
       { "name": "screens", "paths": ["src/screens"], "mayImport": ["shared", "data", "components"] }
     ],
     "restricted": [{ "module": "firebase", "onlyIn": ["src/data"] }],
+    "owned": [],
     "gate": ["cycles", "layers", "restricted"],
     "duplicates": { "minLines": 6, "minChars": 120 },
     "repeated": { "minFiles": 3, "ignore": [] },
@@ -89,7 +90,7 @@
     { "name": "types", "run": "npx tsc --noEmit" }
   ],
   "forbidden": [
-    { "name": "console.log", "pattern": "console\\.log\\(", "paths": ["src", "App.tsx"] },
+    { "name": "console.log", "pattern": "console\\.log\\(", "paths": ["src", "App.tsx"], "comments": false, "skip": [] },
     { "name": "TODO/FIXME", "pattern": "TODO|FIXME", "paths": ["src", "App.tsx"] }
   ],
   "secrets": { "paths": ["."], "skip": ["node_modules", ".git", "dist", "package-lock.json"] }

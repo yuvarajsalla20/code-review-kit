@@ -12,10 +12,27 @@
       "fix": "Use each repeating item's next occurrence, and add a test with a daily item.",
       "effort": "small",
       "proof": "test"
+    },
+    {
+      "area": "logic",
+      "severity": "Medium",
+      "where": "src/sync/merge.ts:40",
+      "what": "Two phones editing the same item offline may keep the older edit",
+      "meaning": "An edit made on one phone can be lost",
+      "impact": "People may see an older version of an item they changed.",
+      "trigger": "Edit the same item on two phones while both are offline, then reconnect",
+      "fix": "Compare updatedAt before writing, and add a test for the race.",
+      "effort": "medium",
+      "proof": "unverified",
+      "confirm": "a run on two devices, or the Firestore load race test"
     }
   ],
   "drop": ["speed:lists|src/components/WorkspaceChips.tsx:15"],
+  "dropReasons": { "speed:lists|src/components/WorkspaceChips.tsx:15": "The list is capped at 5 chips, so drawing it whole costs nothing." },
   "override": { "release:permissionUse|app.json": { "severity": "High", "proof": "code" } },
   "couldNot": ["Live Activity behaviour on a real iPhone"],
-  "results": [{ "name": "Firestore load", "result": "pass", "detail": "1,000 users, 0 errors" }]
+  "results": [
+    { "name": "Firestore load", "result": "pass", "detail": "1,000 users, 0 errors" },
+    { "name": "Repeat-reminder probe", "kind": "probe", "result": "fail", "detail": "Shows the widget bug above: a daily item is missing after its first ring" }
+  ]
 }
