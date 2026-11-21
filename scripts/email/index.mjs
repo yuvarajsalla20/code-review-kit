@@ -3,7 +3,7 @@
 // with the owner's mail connector (for example Gmail). Real addresses live only in a local file kept out of git.
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { join, resolve } from 'node:path';
+import { basename, join, relative, resolve, isAbsolute } from 'node:path';
 import { ConfigError } from '../lib/findings.mjs';
 
 export const DEFAULT_ADDRESSES_FILE = 'review.email.json';
@@ -17,10 +17,12 @@ export function emailSettings(config) {
   return { addressesFile: e.addressesFile ?? DEFAULT_ADDRESSES_FILE, attach: e.attach ?? ['summary.html'], send: e.send ?? 'always', subjectPrefix: e.subjectPrefix ?? 'Code review' };
 }
 
-/** Is `file` tracked by git, and is it ignored? Outside a git work tree both are false and `git` is false. */
-export function gitStatus(root, file) {
-  const run = (...a) => spawnSync('git', a, { cwd: root, encoding: 'utf8' });
-  if (run('rev-parse', '--is-inside-work-tree').stdout.trim() !== 'true') return { git: false, tracked: false, ignored: false };
+/** Is `file` tracked by git, and is it ignored? Outside a git work tree, or with no git installed, both are false and `git` is false. */
+export function gitStatus(root, file, git = 'git') {
+  const run = (...a) => spawnSync(git, a, { cwd: root, encoding: 'utf8' });
+  const inside = run('rev-parse', '--is-inside-work-tree');
+  // With git missing, spawnSync gives an error and no output instead of throwing.
+  if (inside.error || String(inside.stdout ?? '').trim() !== 'true') return { git: false, tracked: false, ignored: false };
   return { git: true, tracked: run('ls-files', '--error-unmatch', file).status === 0, ignored: run('check-ignore', '-q', file).status === 0 };
 }
 
@@ -98,8 +100,19 @@ ${settings.attach.length ? `<p style="margin:0 0 16px">The full report is attach
   return { subject, body: plain, htmlBody: html };
 }
 
-/** The attachments that exist, as absolute paths, and the ones that are missing. */
+/** Files that must never leave the machine, whatever the attach list says: the addresses file and every .env file. */
+const PRIVATE = (name, settings) => /^\.env(\..*)?$/i.test(name) || name === basename(settings.addressesFile) || name === DEFAULT_ADDRESSES_FILE;
+
+/**
+ * The attachments that exist, as absolute paths, and the ones that are missing. A path outside the project, the addresses file
+ * or an .env file stops the run: a careless attach list must not mail a local secrets file.
+ */
 export function attachments(root, settings) {
+  for (const f of settings.attach) {
+    const rel = relative(resolve(root), resolve(root, f));
+    if (rel.startsWith('..') || isAbsolute(rel)) throw new ConfigError(`email.attach: ${f} is outside the project. Attach only the report files the review writes (summary.html).`);
+    if (PRIVATE(basename(f), settings)) throw new ConfigError(`email.attach: ${f} holds private settings or addresses and is never attached.`);
+  }
   const all = settings.attach.map((f) => ({ name: f, path: resolve(root, f) }));
   return { found: all.filter((a) => existsSync(a.path)), missing: all.filter((a) => !existsSync(a.path)).map((a) => a.name) };
 }

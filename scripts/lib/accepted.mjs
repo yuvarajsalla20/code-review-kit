@@ -30,7 +30,7 @@ export function loadAccepted(root, config, known) {
 /** `src/a.ts:12-30` is in `src/a.ts`: line numbers drift, so an entry names the file. */
 export const fileOf = (where) => where.replace(/:[\d-]+$/, '');
 /** A row found in several places (`a.ts:3 | b.ts:9`) is covered by an entry naming any one of those files. */
-const filesOf = (where) => where.split(' | ').map(fileOf);
+export const filesOf = (where) => where.split(' | ').map(fileOf);
 const covers = (entry, f) => entry.check === f.check && filesOf(f.where).includes(entry.file) && (!entry.contains || f.what.includes(entry.contains));
 
 /**
@@ -54,5 +54,5 @@ export function applyAccepted(result, entries, area) {
   return { ...result, findings, counts, accepted, stale: mine.filter((_, i) => !used.has(i)) };
 }
 
-/** An area's run function that also applies the accepted file. */
-export const withAccepted = (area, run, known) => (config, root) => applyAccepted(run(config, root), loadAccepted(root, config, known), area);
+/** An area's run function that also applies the accepted file. `known` is the area-to-checks map, or a function of the config that returns it. */
+export const withAccepted = (area, run, known) => (config, root) => applyAccepted(run(config, root), loadAccepted(root, config, typeof known === 'function' ? known(config) : known), area);

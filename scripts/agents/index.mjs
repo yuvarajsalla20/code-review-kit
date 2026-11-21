@@ -19,5 +19,7 @@ export function runAgents(config, root) {
     orphan: c.orphan(agents, skills),
     size: c.size(agents, s),
   };
-  return { ...assemble(CHECKS, found, s.gate), agents: agents.length, skills: skills.length, settings: s };
+  const trusted = c.bashOnTrust(agents);
+  const notes = trusted.length ? [`Bash is allowed on trust in ${trusted.length} of ${agents.length} reviewers (${trusted.join(', ')}): it can write, so the read-only rule rests on their wording. The skills compare the project before and after with scripts/untouched.mjs.`] : [];
+  return { ...assemble(CHECKS, found, s.gate), agents: agents.length, skills: skills.length, notes, settings: s };
 }

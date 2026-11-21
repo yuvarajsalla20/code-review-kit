@@ -1,5 +1,5 @@
 // What the summary says, once: the tables, notes and labels. markdown.mjs and html.mjs only format this.
-import { PROOF, plainLine } from './model.mjs';
+import { plainLine, proofText } from './model.mjs';
 
 export const COUNT_LABELS = [['Must fix before release', 'mustFix'], ['Failed test runs', 'failedRuns'], ['Blocker', 'Blocker'], ['High', 'High'], ['Medium', 'Medium'], ['Low', 'Low']];
 export const VERDICT_NOTE = 'Not ready if any item must be fixed (a failed gated check or a Blocker) or a test run failed. Incomplete if a check area did not run. Ready after fixes if High items remain. Ready otherwise.';
@@ -12,8 +12,10 @@ export const countRows = (m) => COUNT_LABELS.map(([label, key]) => [label, m.cou
 export function sections(m) {
   return {
     fixFirst: { title: 'Fix first', head: ['#', 'What could go wrong', 'Where', 'Effort'], rows: m.fixFirst.map((r) => [r.n, plainLine(r), r.where, r.effort]), empty: EMPTY.fixFirst },
-    decisions: { title: 'Your decisions', note: DECISION_NOTE, head: ['#', 'Level', 'What it means', 'Why it matters', 'Suggested fix', 'Effort', 'Proof', ...(m.compared ? ['Since last run'] : []), 'Your decision'], rows: m.rows.map((r) => [r.n, r.severity, `${r.meaning} (${r.where})`, r.impact, r.fix, r.effort, PROOF[r.proof], ...(m.compared ? [r.status] : []), '']), empty: EMPTY.decisions },
+    decisions: { title: 'Your decisions', note: DECISION_NOTE, head: ['#', 'Level', 'What it means', 'Why it matters', 'Suggested fix', 'Effort', 'Proof', ...(m.compared ? ['Since last run'] : []), 'Your decision'], rows: m.rows.map((r) => [r.n, r.severity, `${r.meaning} (${r.where})`, r.impact, r.fix, r.effort, proofText(r), ...(m.compared ? [r.status] : []), '']), empty: EMPTY.decisions },
     results: { title: 'Test results', note: 'The test runs behind this review. A pass here means the run passed, not that the code has no bugs.', head: ['Run', 'Result', 'Detail'], rows: m.results.map((r) => [r.name, r.result === 'fail' ? 'Fail' : 'Pass', r.detail]), empty: 'No test runs were recorded. Pass them with --extra (results).' },
+    probes: { title: 'Bug checks by reviewers', note: 'Small scripts a reviewer wrote to show one bug. They are evidence for a row, not test runs, so a failing one does not count as a failed run.', head: ['Check', 'Result', 'Detail'], rows: m.probes.map((r) => [r.name, r.result === 'fail' ? 'Fail' : 'Pass', r.detail]), empty: '' },
+    dropped: { title: 'Dropped by reviewers', note: 'Script rows a reviewer opened and found not real. They do not count; check the reason if one was must fix.', head: ['Area', 'Where', 'What it said', 'Was must fix', 'Reason'], rows: m.dropped.map((d) => [d.area, d.where, d.meaning, d.mustFix ? 'Yes' : 'No', d.reason]), empty: '' },
     fixed: { title: 'Fixed since last run', note: 'In the previous summary, gone now.', head: ['Area', 'Where', 'What it was'], rows: m.fixed.map((f) => [f.area, f.where, f.meaning]), empty: '' },
     areas: m.areas.map((a) => ({ title: a.title, head: ['#', 'Where', 'What (technical)', 'Trigger'], rows: a.rows.map((r) => [r.n, r.where, r.technical, r.trigger || '-']), empty: EMPTY.area })),
     accepted: { title: 'Accepted earlier', note: 'Accepted in review.accepted.json. They do not count, and stay listed so nothing is hidden.', head: ['Area', 'Where', 'What', 'Reason', 'Accepted on'], rows: m.accepted.map((a) => [a.area, a.where, a.what, a.reason, a.date]), empty: '' },

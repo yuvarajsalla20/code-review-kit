@@ -1,5 +1,5 @@
 // Which risky files no test reaches. A test reaches a file when it imports it, directly or through other files.
-import { SOURCE, inside, listFiles, readText } from '../lib/files.mjs';
+import { SOURCE, checkedFiles, inside, listFiles, readText } from '../lib/files.mjs';
 import { buildGraph } from '../lib/imports.mjs';
 import { stripComments } from '../lib/source.mjs';
 import { ConfigError, assemble } from '../lib/findings.mjs';
@@ -17,7 +17,7 @@ export function runTestMap(config, root) {
   const s = { ...DEFAULTS, ...config.tests };
   const structure = config.structure ?? {};
   const roots = structure.roots ?? ['src'];
-  const sources = listFiles(root, roots, { ignore: [...(structure.ignore ?? []), ...s.paths], match: SOURCE });
+  const sources = checkedFiles(root, roots, { label: 'structure.roots (the code the test map reads)', configured: structure.roots !== undefined, ignore: [...(structure.ignore ?? []), ...s.paths], match: SOURCE });
   const tests = listFiles(root, s.paths, { match: SOURCE });
   const texts = new Map([...sources, ...tests].map((f) => [f, stripComments(readText(root, f))]));
   const { edges } = buildGraph(texts, structure.aliases ?? {});

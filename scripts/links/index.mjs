@@ -1,6 +1,6 @@
 // Incoming links and text parsing that can throw: a link any website or message can send must never crash the app or wipe what the person was typing.
 // Text matches, so every row is a candidate the reviewer opens before it counts.
-import { SOURCE, listFiles, readText } from '../lib/files.mjs';
+import { SOURCE, checkedFiles, readText } from '../lib/files.mjs';
 import { assemble } from '../lib/findings.mjs';
 import { lineFinder, stripComments } from '../lib/source.mjs';
 
@@ -29,7 +29,7 @@ const tryBlocks = (text) => {
 
 export function runLinks(config, root) {
   const s = { ...DEFAULTS, ...config.links };
-  const files = listFiles(root, s.roots, { ignore: s.ignore, match: SOURCE });
+  const files = checkedFiles(root, s.roots, { label: 'links.roots', configured: config.links?.roots !== undefined, ignore: s.ignore, match: SOURCE });
   const unguarded = [];
   const handlers = [];
   for (const file of files) {

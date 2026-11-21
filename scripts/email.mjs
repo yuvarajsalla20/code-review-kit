@@ -7,6 +7,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { guard, loadConfig, parseArgs } from './lib/cli.mjs';
+import { ConfigError } from './lib/findings.mjs';
 import { attachments, buildMessage, emailSettings, loadRecipients, pickRecipients } from './email/index.mjs';
 
 const root = process.cwd();
@@ -28,8 +29,14 @@ if (!args.summary) {
   process.exit(2);
 }
 const to = guard(() => pickRecipients(recipients, args.to));
-const model = JSON.parse(readFileSync(args.summary, 'utf8'));
-const files = attachments(root, settings);
+const model = guard(() => {
+  try {
+    return JSON.parse(readFileSync(args.summary, 'utf8'));
+  } catch (e) {
+    throw new ConfigError(`${args.summary} could not be read as JSON: ${e.message}`);
+  }
+});
+const files = guard(() => attachments(root, settings));
 const message = { to, ...buildMessage(model, settings), attachments: files.found, missing: files.missing, send: settings.send };
 const out = JSON.stringify(message, null, 2);
 if (args.out) {

@@ -40,14 +40,14 @@ export function guard(fn) {
   }
 }
 
-/** Prints or writes the report, then exits 1 when something failed (by default, when a gated finding exists). */
-export function finish({ args, result, markdown, failed = result.findings.some((f) => f.gate) }) {
+/** Prints or writes the report, then exits with `code`: by default 1 when something failed (a gated finding exists), else 0. */
+export function finish({ args, result, markdown, failed = result.findings?.some((f) => f.gate), code = failed ? 1 : 0 }) {
   if (args.json) console.log(JSON.stringify(result, null, 2));
   if (args.report) {
     writeFileSync(args.report, markdown);
     console.log(`Report written to ${args.report}`);
   } else if (!args.json) console.log(markdown);
-  process.exit(failed ? 1 : 0);
+  process.exit(code);
 }
 
 export const projectName = (config, root) => config.name || basename(root);

@@ -88,6 +88,18 @@ export const PLATFORM_WORDS = new Set([
   'light-content', 'dark-content', 'overFullScreen', 'interactive', 'automatic', 'fullScreen', 'pageSheet', 'formSheet',
 ]);
 
+/**
+ * A string next to a single `|` is a member of a string-literal union type (`type Problem = 'expired' | 'already-connected'`):
+ * `||` is never a union, and `|` is never applied to a string outside a type. Its copies (the type and every place that returns
+ * or compares it) are kept in step by the typecheck, so they are not repeated text to move into a constant.
+ */
+const UNION_MEMBER = /(['"])((?:\\.|(?!\1)[^\\\n])*)\1(?=\s*\|(?!\|))|(?<![|])\|\s*(['"])((?:\\.|(?!\3)[^\\\n])*)\3/g;
+export const unionMembers = (texts) => {
+  const out = new Set();
+  for (const [, clean] of texts) for (const m of clean.matchAll(UNION_MEMBER)) out.add(m[2] ?? m[4]);
+  return out;
+};
+
 const place = (map, key, file, line) => {
   if (!map.has(key)) map.set(key, []);
   map.get(key).push({ file, line });
@@ -96,17 +108,19 @@ const place = (map, key, file, line) => {
 /**
  * The same value written out in several places, so changing one copy would leave the others behind: lists of four or
  * more numbers or words that appear twice or more, and text of ten or more characters used in `minFiles` or more files.
+ * Members of a string-literal union type are left out (`typedUnions: false` counts them again).
  */
-export function findRepeatedValues(texts, { minFiles = 3, ignore = [] } = {}) {
+export function findRepeatedValues(texts, { minFiles = 3, ignore = [], typedUnions = true } = {}) {
   const lists = new Map();
   const strings = new Map();
+  const typed = typedUnions ? unionMembers(texts) : new Set();
   for (const [file, clean] of texts) {
     const body = withoutImports(clean);
     const at = lineFinder(body);
     for (const re of [NUMBER_LIST, WORD_LIST]) {
       for (const m of body.matchAll(re)) place(lists, m[0].replace(/\s+/g, '').replace(/,\]$/, ']').replace(/"/g, "'"), file, at(m.index));
     }
-    for (const m of body.matchAll(STRING)) if (m[2].length >= MIN_TEXT && !PLATFORM_WORDS.has(m[2]) && !ignore.includes(m[2])) place(strings, m[2], file, at(m.index));
+    for (const m of body.matchAll(STRING)) if (m[2].length >= MIN_TEXT && !PLATFORM_WORDS.has(m[2]) && !typed.has(m[2]) && !ignore.includes(m[2])) place(strings, m[2], file, at(m.index));
   }
   const spread = (list) => new Set(list.map((p) => p.file)).size;
   return [
