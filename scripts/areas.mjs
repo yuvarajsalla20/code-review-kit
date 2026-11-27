@@ -26,7 +26,7 @@ const RAW = [
   { key: 'agents', title: 'Agents', run: runAgents, checks: AGENT_CHECKS, script: 'agents.mjs', applies: (root) => existsSync(join(root, 'agents')) },
   { key: 'speed', title: 'Speed and cost', run: runPerf, checks: PERF_CHECKS, script: 'perf.mjs' },
   { key: 'links', title: 'Links and parsing', run: runLinks, checks: LINK_CHECKS, script: 'links.mjs', applies: (root) => existsSync(join(root, 'src')) || existsSync(join(root, 'App.tsx')) },
-  { key: 'integrity', title: 'Data integrity', run: runIntegrity, checks: INTEGRITY_CHECKS, script: 'integrity.mjs', applies: (root) => existsSync(join(root, 'src')) || existsSync(join(root, 'App.tsx')) },
+  { key: 'integrity', title: 'Data integrity', run: runIntegrity, checks: INTEGRITY_CHECKS, script: 'integrity.mjs', applies: (root) => ['src', 'App.tsx', 'app'].some((p) => existsSync(join(root, p))) },
   { key: 'widgets', title: 'Widgets and Lock Screen', run: runWidgets, checks: WIDGET_CHECKS, script: 'widgets.mjs', applies: usesWidgets },
   // Slow: never part of the default run; only `--areas mutation` or mutate.mjs start it.
   { key: 'mutation', title: 'Mutation (advisory)', run: runMutation, checks: MUTATION_CHECKS, script: 'mutate.mjs', slow: true },
