@@ -62,6 +62,12 @@ export const PLAIN = {
     unguarded: { meaning: 'Text from outside the app is decoded with no safety net', impact: 'A bad link or a broken file can crash the app, and anyone can send a link.' },
     handlers: { meaning: 'Opening a link may throw away what the person was typing', impact: 'A half-written item is lost with no warning when a widget, notification or link opens another screen.' },
   },
+  integrity: {
+    cachedSnapshot: { meaning: 'Opened without internet, the app may take an empty saved answer as the real data', impact: 'People can see an empty list and a zero total, and the app can overwrite its own saved copy or allow a delete it should refuse.', term: t('cached answer', 'What the database library answers from the phone before the server replies. Offline, with no disk cache, it is empty.') },
+    uploadRetry: { meaning: 'Saving a file on a weak or missing connection can wait up to 10 minutes', impact: 'People watch a spinner with no message, then see a failure, and may think their item is lost.' },
+    storagePaths: { meaning: 'Any signed-in account can upload any number of files anywhere under its folder', impact: 'One abusive account can run up the storage bill, and the files are not tied to anything the person owns.' },
+    decimalComma: { level: 'High', meaning: 'A number typed with a decimal comma is read ten or more times too big', impact: 'On phones set to a region that types "2,5", amounts or weights are saved wrong with no warning, so totals are wrong.' },
+  },
   widgets: {
     lockscreen: { meaning: 'A widget or Lock Screen activity shows personal text on a locked phone', impact: 'Anyone who picks up the phone can read it, even when the person hides notification previews.', term: t('Live Activity', 'A live card on the iPhone Lock Screen and Dynamic Island, such as a countdown.') },
     timeline: { meaning: 'A widget is given a fixed list of future screens that can run out', impact: 'iOS does not ask the app for more, so the widget can show an item that has already passed.' },
@@ -71,7 +77,7 @@ export const PLAIN = {
   },
 };
 
-export const AREA_TITLES = { secrets: 'Secrets', forbidden: 'Banned code', structure: 'Code structure', release: 'Release readiness', tests: 'Tests', agents: 'Review agents', security: 'Security', usability: 'Usability', speed: 'Speed and cost', links: 'Links and parsing', widgets: 'Widgets and Lock Screen', mutation: 'Test strength (advisory)', design: 'Design' };
+export const AREA_TITLES = { secrets: 'Secrets', forbidden: 'Banned code', structure: 'Code structure', release: 'Release readiness', tests: 'Tests', agents: 'Review agents', security: 'Security', usability: 'Usability', speed: 'Speed and cost', links: 'Links and parsing', integrity: 'Data integrity', widgets: 'Widgets and Lock Screen', mutation: 'Test strength (advisory)', design: 'Design' };
 
 export const GATED = t('gated check', 'A check that must pass, or be accepted by you in the config, before release.');
 
@@ -85,6 +91,7 @@ export const COULD_NOT = {
   agents: 'Whether each reviewer finds real problems (that needs a trial on a project with planted defects) and whether an installed plugin finds its files.',
   mutation: 'Only a sample of simple changes was tried, and some changes make no difference, so a missed change is a question for a person, not a proven gap.',
   links: 'Whether a guard before the parse already makes it safe, and what iOS does with a link while the app is closed.',
+  integrity: 'How quickly an offline listener answers on a real phone, which key the number pad shows in each region, and whether the deployed rules match the file.',
   widgets: 'How iOS draws and refreshes widgets and Live Activities, StandBy and the Dynamic Island: these need a device.',
   speed: 'Launch time, smoothness, memory and battery on a real, older phone, and how the stored data grows: a script only spots patterns that often cost speed.',
 };

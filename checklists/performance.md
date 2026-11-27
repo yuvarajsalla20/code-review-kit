@@ -16,7 +16,9 @@ For a library (`design.kind` is `library`), use **Library** below and skip Launc
 
 ## Scale
 - [ ] With `design.scale` records per person, reading, parsing and writing local data stays fast, and one change does not rewrite everything.
-- [ ] Lists that can grow are paged or virtualised.
+- [ ] Lists that can grow are paged or virtualised. Check every screen that draws a shared list component: a component that maps rows inside a page wrapper's ScrollView (in another file) is missed by `perf.mjs` `lists`.
+- [ ] Large values each small cell reads (currency, settings) come from a small context or a selector, not from the whole data context, so one change does not redraw every amount on every open screen.
+- [ ] Large local copies (a cached list as JSON or base64) are encoded and decoded with the platform's native functions, not a character loop in JavaScript.
 - [ ] Caches, queues and logs have a size limit and are cleared.
 
 ## Background and battery
@@ -26,7 +28,8 @@ For a library (`design.kind` is `library`), use **Library** below and skip Launc
 ## Network
 - [ ] Reads and writes per screen and per change are counted, and the count does not grow with the data.
 - [ ] Calls have a timeout, a retry limit and a back-off.
-- [ ] Images and assets are sized for the screen.
+- [ ] Images and assets are sized for the screen: list thumbnails have their own small file.
+- [ ] Encrypted files keep the downloaded (still encrypted) copy in a cache folder, and a lock wipes only the decrypted copies, so an unlock does not download every visible file again.
 
 ## Needs a device
 - [ ] Launch time, frame rate on the busiest screen, memory and battery over an hour are measured on a real, older phone against a target.

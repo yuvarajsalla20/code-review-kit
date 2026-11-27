@@ -11,7 +11,7 @@ import { buildModel } from '../scripts/summary/model.mjs';
 import { project } from './helpers.mjs';
 
 const kit = join(import.meta.dirname, '..');
-const SKIP_ALL = { skipAreas: Object.fromEntries(['structure', 'release', 'tests', 'agents', 'speed', 'links', 'widgets'].map((a) => [a, 'not part of this test'])) };
+const SKIP_ALL = { skipAreas: Object.fromEntries(['structure', 'release', 'tests', 'agents', 'speed', 'links', 'integrity', 'widgets'].map((a) => [a, 'not part of this test'])) };
 const check = (files, config = {}) => spawnSync('node', [join(kit, 'scripts/check.mjs')], { cwd: project({ ...files, 'review.config.json': { ...SKIP_ALL, ...config } }), encoding: 'utf8' });
 const secretsArea = AREAS.find((a) => a.key === 'secrets');
 const forbiddenArea = AREAS.find((a) => a.key === 'forbidden');

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.16.0 - 2026-11-27
+Lessons from a full review of a shipping Firebase app. Every script passed; the real bugs came from the reviewer agents. The patterns a script can count are now scripted.
+- New check area `integrity` (Data integrity, `scripts/integrity.mjs`), advisory, with four checks: `cachedSnapshot` (a listener that takes an empty cached answer as the truth), `uploadRetry` (Storage uploads with the 10-minute default retry), `storagePaths` (Storage rules with a writable `{path=**}` wildcard; `if false` is not counted) and `decimalComma` (a number parser that removes every comma). A configured `storageRules` file that does not exist stops the run; with none configured the path comes from `firebase.json`. The area applies to any project with `src`, `App.tsx` or `app`, so an existing config without the block now runs Incomplete until `upgrade.mjs --write` adds it or `skipAreas` names a reason.
+- `check.mjs` notes an empty `commands` list and names the `package.json` scripts that could fill it. Before, a review could run no tests at all without saying so.
+- Checklists: new lines in `firebase.md`, `money-dates.md`, `security.md`, `failure-paths.md`, `general.md` and `performance.md` for the cases a script cannot see (see the README, "Added in 1.16.0").
+- 6 new tests (161 in all).
+
 ## 1.15.0 - 2026-11-21
 Fixes from the 2026-11-21 review of the kit, plus three asks from the owner.
 - Secrets and banned patterns now reach the summary. `summary.mjs` runs the secrets scan and the `forbidden` rules itself (areas `secrets` and `forbidden`), and every hit is a must-fix row. Before, `check.mjs` failed on a leaked key while the summary said Ready. The review-summary skill now runs `check.mjs` first.

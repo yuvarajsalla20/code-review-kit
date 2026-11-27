@@ -77,6 +77,7 @@ Shared by all: `rules/review-rules.md` (conduct, severity scale, who owns which 
 | `scripts/release.mjs`, `scripts/testmap.mjs` | Release readiness (lock file, app settings, permission texts, tracked secret files, privacy keywords) and risky files no test reaches. Both take `--report` and `--json`; settings are the `release` and `tests` blocks in `review.config.json`. |
 | `scripts/perf.mjs` | Speed and cost candidates: large images and media, heavy packages, animations without the native driver, timers and listeners with no stop, long lists drawn with `.map` inside a ScrollView. Works with no config; the `speed` block changes the settings. Advisory: nothing gates unless `speed.gate` says so. Code lives in `scripts/perf/`. See **Speed checks**. |
 | `scripts/links.mjs`, `scripts/widgets.mjs` | Links and parsing; widgets and Lock Screen (1.12.0). Code in `scripts/links/` and `scripts/widgets/`. |
+| `scripts/integrity.mjs` | Data integrity (1.16.0): listeners that trust an empty cached answer, uploads that can hang for 10 minutes, Storage rules that accept any file at any depth, and number parsers that drop a decimal comma. Code in `scripts/integrity/`. |
 | `scripts/firestore-load.mjs`, `scripts/e2e.mjs`, `scripts/decide.mjs` | Firestore rules and load on the emulator; end-to-end starters; the owner's decisions read back (1.12.0). |
 | `scripts/email.mjs` | Prepares the report email for the assistant to send with your mail connector, only to addresses you allow (1.13.0). See **Email the report**. |
 | `scripts/structure.mjs` | The structure checks on their own, with `--report` to write the tables. Code lives in `scripts/structure/` (one file per check) and `scripts/lib/` (shared file, comment and import handling). |
@@ -190,6 +191,20 @@ node <kit>/scripts/email.mjs --summary summary.json --to all --out review-out/em
 
 `--check` confirms the setup and lists the allowed addresses. The prepared file holds `to`, `subject`, `body`, `htmlBody` and the `attachments` paths. The `code-review` and `review-summary` skills do all of this at the end of a review, following "Emailing the report" in `rules/review-rules.md`.
 
+## Added in 1.16.0
+
+Learned from a full review of a shipping Firebase app (27 Nov 2026). Every script passed, while the reviewer agents found an offline start that emptied the app, a weight read ten times too big, a 10-minute upload hang, an edit form that deleted files changed elsewhere, and amounts shown without the PIN on one screen. The patterns a script can count are now scripted; the rest are checklist lines.
+
+| What | How |
+|---|---|
+| Data integrity (`integrity`, new area) | `node <kit>/scripts/integrity.mjs --report integrity.md`. Applies when the project has `src`, `App.tsx` or `app` (Expo Router); add the block with `upgrade.mjs --write`. Nothing gates by default. |
+| `cachedSnapshot` | A Firestore `onSnapshot` listener (a method call, or a bare call in a file that imports Firestore) when nothing in the project reads `metadata.fromCache`, keeps a disk cache (`persistentLocalCache`, `enablePersistence`) or uses the native SDK. Opened offline with a memory-only cache, Firestore answers first with an empty, cached answer. |
+| `uploadRetry` | A Firebase Storage upload (`uploadBytes`, `uploadBytesResumable`, `uploadString`, `putFile`) when nothing sets `maxUploadRetryTime`. The default is 10 minutes. |
+| `storagePaths` | A Storage rule with a `{path=**}` wildcard that allows `write` or `create` (anything but `if false`). The file is `integrity.storageRules` (it must exist), else the `storage.rules` path in `firebase.json`, else `storage.rules`. A semicolon after `allow` is optional, and nested `match` blocks are read. |
+| `decimalComma` | Code that removes every comma just before `Number`, `parseFloat` or `parseInt`, so `2,5` reads as 25: a global `replace` with `,`, a class that lists a comma, a negated class that does not (`[^0-9.]`) or `\\D`, `replaceAll(',', '')`, or `split(',').join('')`. |
+| Empty commands | `check.mjs` notes when `commands` is empty, and names the `test`, `typecheck` and `lint` scripts in `package.json` that could fill it. |
+| Checklists | New lines in `firebase.md` (cached first answers, queued list writes, upload retry limits, count limits beaten by one batch, exact Storage paths, server-only records on account deletion, App Check), `money-dates.md` (decimal comma, rows that add up to the total, calendar dates, export currency, stale-rate totals), `security.md` (module-level caches on sign-out, hidden values in edit forms, a missing PIN after a backup restore), `failure-paths.md` (edit forms and background jobs racing another change, refused queued writes, abandoned saves, retry after a failed upload), `general.md` (one-item-per-run jobs that stop) and `performance.md` (shared list components, narrow contexts, native base64, thumbnails, cached encrypted files). |
+
 ## Added in 1.15.0
 
 | What | How |
@@ -198,7 +213,7 @@ node <kit>/scripts/email.mjs --summary summary.json --to all --out review-out/em
 | A wider secrets scan | Reads every `.env*` file, shell scripts, `.pem`, `.p8`, `.key`, `.plist`, `.xml`, `.properties` and `.gradle` files. Finds JSON keys (`"password": "..."`), unquoted values in `.env` files, and Stripe live keys, GitHub tokens and Slack tokens by their format. Error codes (`auth/weak-password`), short labels (`Password`), setting names, a value equal to its key's name and URLs are no longer flagged; other letters-only values still count. `secrets.paths` defaults to `["."]` and `secrets.skip` to the usual build folders. |
 | Accept a secret or a banned line | In `review.accepted.json`, area `secrets` (checks `assignment`, `awsKey`, `stripeKey`, `githubToken`, `slackToken`, `privateKey`, `serviceAccount`) or `forbidden` (the check is the rule's name), with the file and an optional `contains` (for a secret, the key name). `skip` in `secrets` and in each forbidden rule takes paths (`src/theme.ts`, `src/generated/`) as well as names. |
 | Forbidden rules | Each rule takes `skip`, `comments: false` (read code only, so a commented-out `console.log` does not count; the default keeps comments, because TODO/FIXME rules only match there) and `files` (a pattern for which files to read). A bad pattern is one Config problem line. |
-| No check passes on nothing | A `roots` folder you named that does not exist, or roots with no source files, stop structure, tests, links and widgets with a Config problem (exit 2). `check.mjs` prints how many files each area read. |
+| No check passes on nothing | A `roots` folder you named that does not exist, or roots with no source files, stop structure, tests, links, widgets and (1.16.0) integrity with a Config problem (exit 2). `check.mjs` prints how many files each area read. |
 | Hand-off files are checked | Levels and results are read whatever their case (`high`, `FAIL`, `failed`, `error`); anything else stops the summary, naming the file and the row. A result is never assumed to be a pass. |
 | Probes are not test runs | A results entry with `"kind": "probe"` is a reviewer's script that shows one bug. It is listed under "Bug checks by reviewers" and never makes the verdict Not ready. |
 | Unconfirmed rows say so | Proof `unverified` (with `confirm`: what would confirm it) shows "Not confirmed: ...". A missing or unknown proof is unverified, never "Read in the code". |
@@ -278,4 +293,4 @@ Add this repository as a plugin marketplace source, or clone it and point Claude
 Every word this tool shows, and every line of its documentation, follows the shared [Writing rule](https://github.com/yuvarajsalla20/app-settings-kit#writing-rule-every-word-is-professional): Title Case for titles, rows and buttons; calm, complete sentences for captions and messages; "e.g.," for examples; no chatty fragments, slang or exclamation marks. Its reports and messages are written in the same voice.
 
 ---
-Version 1.15.0 - 2026-11-21
+Version 1.16.0 - 2026-11-27

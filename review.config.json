@@ -6,7 +6,7 @@
   ],
   "riskyAreas": [
     "scripts/lib/: every script depends on it",
-    "scripts/structure/, release/, testmap/, agents/, perf/, links/, widgets/, load/, e2e/: a wrong finding sends the owner the wrong way",
+    "scripts/structure/, release/, testmap/, agents/, perf/, links/, integrity/, widgets/, load/, e2e/: a wrong finding sends the owner the wrong way",
     "scripts/summary/: the verdict and the page"
   ],
   "design": {
@@ -47,6 +47,7 @@
           "scripts/agents",
           "scripts/perf",
           "scripts/links",
+          "scripts/integrity",
           "scripts/widgets",
           "scripts/load",
           "scripts/e2e",

@@ -9,6 +9,7 @@ import { runRelease, CHECKS as RELEASE_CHECKS } from './release/index.mjs';
 import { runStructure, CHECKS as STRUCTURE_CHECKS } from './structure/index.mjs';
 import { runTestMap, CHECKS as TEST_CHECKS } from './testmap/index.mjs';
 import { runLinks, CHECKS as LINK_CHECKS } from './links/index.mjs';
+import { runIntegrity, CHECKS as INTEGRITY_CHECKS } from './integrity/index.mjs';
 import { runWidgets, CHECKS as WIDGET_CHECKS, usesWidgets } from './widgets/index.mjs';
 import { SECRET_CHECKS, forbiddenChecks, runForbidden, runSecrets } from './scan/index.mjs';
 
@@ -25,6 +26,7 @@ const RAW = [
   { key: 'agents', title: 'Agents', run: runAgents, checks: AGENT_CHECKS, script: 'agents.mjs', applies: (root) => existsSync(join(root, 'agents')) },
   { key: 'speed', title: 'Speed and cost', run: runPerf, checks: PERF_CHECKS, script: 'perf.mjs' },
   { key: 'links', title: 'Links and parsing', run: runLinks, checks: LINK_CHECKS, script: 'links.mjs', applies: (root) => existsSync(join(root, 'src')) || existsSync(join(root, 'App.tsx')) },
+  { key: 'integrity', title: 'Data integrity', run: runIntegrity, checks: INTEGRITY_CHECKS, script: 'integrity.mjs', applies: (root) => ['src', 'App.tsx', 'app'].some((p) => existsSync(join(root, p))) },
   { key: 'widgets', title: 'Widgets and Lock Screen', run: runWidgets, checks: WIDGET_CHECKS, script: 'widgets.mjs', applies: usesWidgets },
   // Slow: never part of the default run; only `--areas mutation` or mutate.mjs start it.
   { key: 'mutation', title: 'Mutation (advisory)', run: runMutation, checks: MUTATION_CHECKS, script: 'mutate.mjs', slow: true },

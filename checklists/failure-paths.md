@@ -7,6 +7,9 @@ and say what really happens. "Not handled" is a finding if the user could notice
 - [ ] Another device deletes or edits an item while this one is closed: does it disappear here, or come back?
 - [ ] Another device deletes an item while its screen is open here: no blank screen, no crash.
 - [ ] Both devices act on the same item (Done on both): no skipped step, no duplicate history.
+- [ ] An edit form is open while another device, or a background job of this app, changes the item. Saving does not undo that change: files to delete are worked out from the copy the form opened with, never from the live copy, and a changed `updatedAt` warns instead of overwriting.
+- [ ] An edit form is saved after the item was deleted elsewhere: it says so and does not create a new item that points at deleted files.
+- [ ] A background job that rewrites items (a migration, encryption, a clean-up) changes `updatedAt` too, so an older queued edit is not counted as newer.
 - [ ] A scheduled local effect (alert, timer) on a second device stops after the item is finished on the first.
 
 ## Stale actions
@@ -18,7 +21,7 @@ and say what really happens. "Not handled" is a finding if the user could notice
 - [ ] A retried or queued write can never overwrite something newer (old save after a newer delete).
 - [ ] The queue survives app kill, sign-out and a user switch without sending to the wrong account.
 - [ ] A write that hangs offline does not block later writes.
-- [ ] A rejected write is reported to the user, not dropped silently.
+- [ ] A rejected write is reported to the user, not dropped silently, also when it is a queued write sent again at the next start. Files uploaded for it are removed or kept on purpose.
 - [ ] First launch offline, and a first answer from the server that is empty or cached: nothing is wrongly deleted.
 
 ## Sign-out and user switch
@@ -48,6 +51,8 @@ and say what really happens. "Not handled" is a finding if the user could notice
 - [ ] Permission denied, revoked later, or granted later: the app explains and recovers.
 - [ ] Location, camera, notifications or network unavailable: a clear message, no endless spinner.
 - [ ] A timeout on the screen while the operation keeps running in the background: state stays consistent.
+- [ ] A save the person left (Back, Cancel) while it was still uploading does not finish later and open the item's screen.
+- [ ] After one failed upload, Save works again without picking the file again: a picked file is not moved or deleted until the whole save has succeeded.
 - [ ] A multi-step operation that fails halfway (erase data, then delete login) leaves the user able to retry.
 
 ## Capacity

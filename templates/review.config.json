@@ -60,6 +60,7 @@
   "tests": { "paths": ["tests"], "risky": ["src/data", "src/notify"], "gate": [] },
   "speed": { "roots": ["src", "App.tsx"], "assetRoots": ["assets"], "webRoots": ["public"], "maxAssetKb": 300, "gate": [] },
   "links": { "roots": ["src", "App.tsx"], "ignore": ["tests"], "gate": [] },
+  "integrity": { "roots": ["src", "App.tsx"], "ignore": ["tests"], "storageRules": "storage.rules", "gate": [] },
   "widgets": { "roots": ["src", "App.tsx"], "ignore": ["tests"], "gate": [] },
   "skipAreas": { "agents": "Example: say why an area does not apply. A skip with no reason counts as not run." },
   "firestoreLoad": {

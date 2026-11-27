@@ -3,7 +3,8 @@
 //   node path/to/review-kit/scripts/check.mjs [path/to/review.config.json] [--results results.json]
 // Exit code 1 if any command fails, any forbidden or secret match is found, or a gated check finds something.
 // Exit code 3 (Incomplete) when everything that ran passed but an area that applies has no config block and is not in `skipAreas`.
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import { AREAS, coverage } from './areas.mjs';
 import { guard, loadConfig, parseArgs } from './lib/cli.mjs';
@@ -23,6 +24,17 @@ const lastCountLine = (out) => (String(out).split('\n').map((l) => l.replace(/\x
 
 // 1. Commands
 console.log('== Commands ==');
+// An empty list runs no tests at all, so the summary would show no test run. Name the package.json scripts that could fill it.
+if (!(config.commands || []).length) {
+  const scripts = (() => {
+    try {
+      return Object.keys(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {});
+    } catch {
+      return [];
+    }
+  })().filter((n) => /^(test|typecheck|type-check|tsc|lint|check)$/.test(n));
+  console.log(`NOTE  No commands are set in review.config.json, so no tests or type checks ran.${scripts.length ? ` package.json has: ${scripts.map((n) => `npm run ${n}`).join(', ')}. Add them under "commands".` : ''}`);
+}
 for (const { name, run } of config.commands || []) {
   try {
     const out = execSync(run, { cwd: root, stdio: 'pipe', encoding: 'utf8' });
