@@ -6,7 +6,7 @@ import { project } from './helpers.mjs';
 
 const check = join(import.meta.dirname, '..', 'scripts', 'check.mjs');
 // These tests are about commands, patterns and secrets: every area is skipped on purpose, so a clean run is a pass (exit 0), not Incomplete.
-const SKIP_ALL = { skipAreas: Object.fromEntries(['structure', 'release', 'tests', 'agents', 'speed', 'links', 'widgets'].map((a) => [a, 'not part of this test'])) };
+const SKIP_ALL = { skipAreas: Object.fromEntries(['structure', 'release', 'tests', 'agents', 'speed', 'links', 'integrity', 'widgets'].map((a) => [a, 'not part of this test'])) };
 const run = (files, config) => spawnSync('node', [check], { cwd: project({ ...files, 'review.config.json': typeof config === 'string' ? config : { ...SKIP_ALL, ...config } }), encoding: 'utf8' });
 
 test('check.mjs still passes a clean project, and runs commands', () => {

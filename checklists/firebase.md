@@ -8,9 +8,16 @@
 - [ ] Auth state is awaited before the first read; no read with `null` user.
 - [ ] Listeners are unsubscribed on sign-out; local caches cleared on sign-out.
 - [ ] Offline writes queue and sync; conflicts do not silently overwrite newer data.
+- [ ] With a memory-only cache (the web SDK's default), a listener opened offline first gets an empty answer with `metadata.fromCache` true. The app waits for a server answer before it treats an item as gone, overwrites a saved copy, or allows a delete that checks "is this in use". (`integrity.mjs` `cachedSnapshot`)
+- [ ] Every queued kind of write is queued: if items are kept offline but the lists they point to (categories, people, settings) are not, a replayed item can point at something that was never saved.
+- [ ] Storage uploads set `maxUploadRetryTime` and `maxOperationRetryTime` (the defaults are 10 minutes and 2 minutes), so a save offline fails fast with a message. (`integrity.mjs` `uploadRetry`)
+- [ ] A count limit in rules (free plan, trial) cannot be beaten by one batch or by parallel writes: a counter updated by a function after the write commits is always one step behind. Check with one batch of 50 creates in the emulator.
+- [ ] Storage rules name the exact path and file name the app writes, not a `{path=**}` wildcard, and tie the file to an item the user owns. (`integrity.mjs` `storagePaths`)
+- [ ] Rules check that a stored file path inside a document points into the owner's own folder.
 - [ ] Batched writes stay under limits (500 operations); large deletes are chunked.
-- [ ] Delete account: re-authenticates, deletes owned data first, then the auth user; a failure midway leaves the user able to retry.
+- [ ] Delete account: re-authenticates, deletes owned data first, then the auth user; a failure midway leaves the user able to retry. Documents only the server can write (plan, usage, counters) and records in other services (payments, analytics) are removed by a function too.
 - [ ] Indexes needed by queries exist; no query depends on an unindexed combination.
-- [ ] Free-tier limits: no listener or loop that reads the whole database repeatedly.
+- [ ] Free-tier limits: no listener or loop that reads the whole database repeatedly, including a full re-read of every item at each cold start when a saved copy exists.
+- [ ] Callable functions that reach a paid outside service have App Check or a per-user rate limit.
 - [ ] Public client config is fine in the app; no admin credentials or service-account files in the repo.
 - [ ] Hosting: security headers, cache headers, and the rules deploy command is documented.

@@ -103,10 +103,10 @@ test('the stand-alone report and the summary both list accepted rows and stale e
 
 test('check.mjs lists the areas that did not run, and says so in its last line', () => {
   const some = node('check.mjs', project({ 'src/a.ts': 'export const a = 1;', 'review.config.json': { tests: { paths: ['tests'], risky: [] } } }));
-  assert.match(some.stdout, /== Not run ==\nstructure, release, speed, links: no block/);
-  assert.match(some.stdout, /INCOMPLETE: the checks that ran passed, but 4 of 5 areas did not run/);
+  assert.match(some.stdout, /== Not run ==\nstructure, release, speed, links, integrity: no block/);
+  assert.match(some.stdout, /INCOMPLETE: the checks that ran passed, but 5 of 6 areas did not run/);
   assert.equal(some.status, 3, 'a run that skipped areas is not a pass');
-  const all = node('check.mjs', project({ 'src/a.ts': 'export const a = 1;', 'review.config.json': { structure: {}, release: {}, tests: { paths: [] }, speed: {}, links: {} } }));
+  const all = node('check.mjs', project({ 'src/a.ts': 'export const a = 1;', 'review.config.json': { structure: {}, release: {}, tests: { paths: [] }, speed: {}, links: {}, integrity: {} } }));
   assert.doesNotMatch(all.stdout, /Not run/);
   assert.equal(all.status, 0);
 });

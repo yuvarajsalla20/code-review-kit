@@ -11,6 +11,7 @@ export const STARTERS = {
   tests: (root) => ({ paths: first(root, ['tests', '__tests__', 'test'], ['tests']), risky: existing(root, ['src/data', 'src/notify', 'src/store', 'src/auth']), gate: [] }),
   speed: (root) => ({ roots: existing(root, ['src', 'App.tsx']), assetRoots: existing(root, ['assets']), maxAssetKb: 300, gate: [] }),
   links: (root) => ({ roots: existing(root, ['src', 'App.tsx', 'app']), ignore: ['tests'], gate: [] }),
+  integrity: (root) => ({ roots: existing(root, ['src', 'App.tsx', 'app']), ignore: ['tests'], ...(existsSync(join(root, 'storage.rules')) ? { storageRules: 'storage.rules' } : {}), gate: [] }),
   widgets: (root) => ({ roots: existing(root, ['src', 'App.tsx', 'widgets', 'targets']), ignore: ['tests'], gate: [] }),
   agents: () => ({ paths: ['agents'], skills: ['skills'] }),
 };
@@ -22,5 +23,6 @@ export const STARTER_NOTES = {
   tests: 'list the files that must never break in tests.risky',
   speed: 'nothing gates; set speed.gate when you want it to. Website files (public/) are left out: they are not in the app download',
   links: 'nothing gates; set links.gate to ["unguarded"] once the rows are fixed or accepted',
+  integrity: 'nothing gates; walk the new lines in checklists/firebase.md, money-dates.md and failure-paths.md too',
   widgets: 'walk checklists/widgets.md too; nothing gates',
 };
